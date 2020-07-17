@@ -1,0 +1,2 @@
+1:在Menu组件和Submenu组件中挂载时期都会注册on-menu-item-select事件，这个事件是专门针对于他们组件含的menuItem组件设立的。
+    当所含子项MenuItem选中时，就会通知到它父级的Submenu和Menu层通知选中状态，activeName需要更新了。

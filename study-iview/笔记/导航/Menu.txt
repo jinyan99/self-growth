@@ -1,0 +1,10 @@
+复习时同步参考components/menu文件夹里的代码及注释。
+
+menu导航组件组织结构：总共分为4部分结构组成：Menu标签 + MenuGroup分组 + MenuItem菜单项 + Submenu含子菜单项
+一：indexjs文件
+    1-index文件就是最终被抛出的顶层文件，主要整合下上面4块功能，都挂在Menu组件实例属性上了。
+二：Submenu结构：(含二级菜单项的标签)
+    1-template部分是一个li = 插槽标题div + 垂直模式的插槽菜单标签+ 水平模式的插槽菜单标签------共三部分(2项最终实现)
+三：MenuItem结构：(最小粒度菜单项标签)
+    1-template部分是：
+
