@@ -1,1 +1,0 @@
-## 借鉴es6阮一峰的promise研究学习----https://es6.ruanyifeng.com/#docs/promise
