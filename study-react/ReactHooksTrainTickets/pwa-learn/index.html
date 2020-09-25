@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> Learn PWA
+    </title>
+    <link rel="stylesheet" type="text/css" href="./index.css">
+</head>
+<body>
+    <h1>Hello PWA</h1>
+    <script>
+        //显然service worker是单利对象，不可以用各种函数来创建新的实例，这一点就和webworker有很大的不同，在这属性上面还有个register方法。
+      //  navigator.serviceWorker    这叫注册service worker
+      
+      //register方法返回的是个promsie，then里1参是成功函数，2参是错误回掉函数
+      //有两个参数，1参是service代理的脚本的地址，2参是个选项对象里的scope参数是代表的这个脚本可以控制的页面的相对路径，，传了‘/’根路径就可以控制所有页面
+        navigator.serviceWorker.register('./sw.js', {scope:'/'})
+            .then( registration => {
+                console.log(registration)
+            }, error => {
+                console.error(error)
+            })
+    //注册好之后，访问开启的服务器，localhost:5000 ,控制套打印证明成功了
+    //然后对sw.js的文件编写才是正式的对service worker的编程，具体见那文件。
+
+
+
+
+    /* const xhr = new XMLHttpRequest();
+    xhr.responseType = 'json';
+    xhr.onreadystatechange = () => {
+        if(xhr.readyState === 4) {
+            //为4的时候代表整个请求已经结束了
+            //但请求结束并不代表成功，得判断status状态码200才行
+            if(xhr.status >=200 && xhr.status <300) {
+                console.log(xhr.response)
+            }
+        }
+    }
+    open第三个参数是默认是true，异步的意思，false就是同步
+    xhr.open('GET', '/userinfo.json',true)
+    xhr.send(null);
+ */
+
+    //用fetch实现上面的请求逻辑
+    fetch('/userinfo.json',{
+        method: "GET",
+        //body:
+        headers: new Headers(),//传入Header对象
+        credentials: 'include'//用来控制发送的凭证，比如cookie等
+    }).then(response => response.json()).
+            then(info => console.log(info))
+
+
+       //fetch的所有入参可以封装成个独立的request对象
+       //然后直接传给fetch
+       const req= new Request('/userinfo.json',{
+        method: "GET",
+        //body:
+        headers: new Headers(),//传入Header对象
+        credentials: 'include'//用来控制发送的凭证，比如cookie等
+       })
+       fetch(req).then(response => response.json()).
+            then(info => console.log(info))
+
+       </script>
+</body>
+</html>

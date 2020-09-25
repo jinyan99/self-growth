@@ -1,0 +1,843 @@
+1-PWA(渐进式网络应用): HTML页面--->PWA API--->服务器CDN(html页面也能直接到服务器cdn)
+    pwa退化的模式就是我们尝使用的浏览器http访问页面的模式。当浏览器不支持PWA所需要的API的时候
+    就会退化，如果浏览器支持，那我们页面就具备一个重要能力，那就是可以控制包括js在内的静态资源缓存
+    这就意味着即便我们的设备没有联网，我们依旧可以使用缓存来使用应用页面，这就给我们提供了强大的离线访问能力
+    即便不再离线模式下，缓存也能大大提高页面的访问速度。可以说PWA是前端领域今年来的革命性进化。
+    在移动端，ios和安卓都已经标配了对pwa的支持。渐进式对业务应用的透明性，从代码上看不大出来是PWA。
+现在这个火车票项目是mpa的项目
+2-效率类工具：iconfont(纯色字体图标) +  snippets
+    snippets可以引申为一中软件能力，你可以输入很短的指令，然后软件帮我们输出这个指令代表的完整内容。
+    很多软件都支持snippets的能力如现在几乎所有编辑器，配置自己的snippets提升自己的开发效率。
+3-原则：职责分离：模块解偶优化可维护性
+
+2-2：react-scripts及其工作原理
+react-scripts的这个依赖就是来支持packagejson配置文件中脚本命令的创建使用的。提供npm start的命令启动工作
+    01:react-scripts的工作原理：react-scripts负责执行你的项目的startbuild命令等，如执行npm start后，去nodemodules中找react-scripts目录
+        因为所有执行命令相关的文件都在 .bin 文件夹中，里面就有对接受的各种命令操作。如对应build命令的执行逻辑文件里判断当前script命令为build的话，就对当前项目执行webpack命令给项目打包，。
+2-3:先cra创建个项目后用eject解构编译脚本在项目基础上执行后面的课程：它会将react-script当中，几乎全部逻辑代码解放到项目根目录中去，从而允许我们自行修改即可以修改脚本
+命令的默认启动文件及配置文件。执行npm run eject后，会发现，cra出来的就3个依赖一下子packagesjson中增加了很多依赖，
+原来的react-script依赖也不见了，因为都把里面内容都解放出来了，所以诞生了很多依赖。eject不能重复执行，一旦执行不可逆。
+    01:npx工具：npm全局装的话，若npm很少使用就比较浪费硬盘，我们希望用一次就删除它。这就推出了npm的附属工具npx，
+        在npm新的版本中，这个npx是默认自带的。npx的功能很强大，能直接下载所需命令行安完后自动删除它，这样就不会浪费没必要的硬盘空间了
+        使用方式安装使用一体化：npx create-react-app 项目名  ；。
+    02:which npx ：这命令能检出命令的安装路径
+3-react新特性
+    Context  + ContextType + lazy + Suspense + memo
+        1-context不仅能实现跨层级组件传递，还可以在值变化的时候重新渲染consumer下面的元素。在同一个组件中可以消费任意多个context。
+        但是context设多了就会让组件不纯粹(因为依赖了全局变量)，所以context不应在组件中大规模的使用，所以一般在同一个组件中最多仅仅使用一个
+        context就好了。
+        2-简单用providerconsumer的代码使用context生产消费，会显得代码不那么工整了，于是我们希望在jsx之前就能获取
+        到context的值，而不是麻烦的在jsx里写.Consumer标签和里的回掉来获取值。于是ContextType就诞生了。
+        在组件中直接写它是个静态类型变量，所以写static contextType=BatteryContext(它是createContext()的实例名子)；写了这个之后，在render的jsx中就不用写.Consumer标签和里
+        面的回掉来获取context值了。直接在render中const battery = this.context;就能获取到了(写完contexttype后就能使用this.context属性来获取了)
+        但provider写法没变都是一样的。可见组件中在只有一个context值的使用时使用ContextType就方便很多。
+           静态类型变量是在类组件的，但函数组件中用useContext。
+        3-lazy和Suspense和ErrorBoundary的使用(这三者使用配合缺一不可)
+        对于延迟加载异步加载代码块的方面的优化来说：默认情况页面不会主动加载只在用到的时候才去加载，对于react组件来说什么是用到呢就是当渲染的时候。
+        01webpack提供了Code Splitting的能力
+        02import除了静态导入模块能力还有动态导入模块的能力返回的是promise(import('/*webpackChunkName:"about"*/'./detail.js').then(...))
+        03react提供了lazy函数，用来将执行组件的导入行为封装成react组件(封装的是导入的行为而不是组件本身而且导入意味着网络请求)
+        (lazy用中在import里加个注视就能让它分出来的包名字不会有指纹，显示易读可读的分出包的文件名字)
+        suspense用来显示加载状态，在lazy里的异步加载的组件空档期什么都不显示，应该用suspense在空档期里显示加载状态。
+        suspense是react内置的组件，配合lazy使用的，suspense设置fallback属性，属性值传入一对jsx或组件的实例。具体用法见官网用法。
+        但suspense有缺点无法捕获(分出的包加载失败)异常，无法处理加载错误；比如使用suspense时万一里面分出包的请求请求超时，这是suspense显示不出来就会报错，我们得捕获这种错误
+        不能报漏给用户，
+        所以react给我们提供了个概念叫：ErrorBoundary(错误边界)----就是一个捕获后台组件的错误的渲染错误的组件。
+    它只不过是内部封装的react的生命周期方法componentDidCatch。错误边界只是一种概念，它的实现可以用componentDidCatch或static getDerivedStateFromError()
+    这两个钩子的使用都可以实现这个错误边界概念。具体件官方文档
+       如：    组件里写：state={hasError:false}
+                    static getDerivedStateFromError(){return {hasError:true}}  //这里return的能直接自动更新到state状态值里。
+                    render(){if(this.state.hasError){return <div>error</div>}}
+        //当然上面也可以用componentDidCatch(){this.setState({hasError:true})}   新钩子更简单点不用setstate
+        4-memo的使用。
+        //即不用任何组件优化(memo,purecomponent)的话,传入子组件给state里的value1值，不管你state里的value2变了只要你整个state变了，子组件都会重新渲染的。加了组件优化的话，不是对应值变就不会变。
+        reatc中有shouldComponentUpdate()钩子阻止状态数据不变时的重新渲染。
+        使用PureComponent会帮我吗自动封装这个shouldComponentUpdate钩子的判断，自动阻止数据不变的不必要渲染。
+    但它有局限性：1-只有传入的props的第一级发生变化才会去触发重新渲染。
+    比如state数据是个对象state={person:{age:1}}这时setstate({person:{age:2}})的化，也不会触发视图更新。 
+                2-还有个陷阱：就是就算你Foo组件用到的state里的a值没变，但你其他值变渲染时虽然不会影响到你Foo组件的状态，但是给Foo组件传了个cb={()=>{}}
+    这样每次渲染都会重新创建函数对象，会引起每次渲染主组件都会给Foo组件传props新值也会引起Foo组件对应的多次渲染，解决方法，将回掉函数写成赋给变量的形式不会每次都重新创建函数对象
+    但这时定义的变量的回掉里的this不能保证，写成箭头函数行，写成在Foo组件。.bind(this)的化,由于每次渲染时this都是不一样的所以会引起Foo的多次重复渲染。
+                3-react为函数组件(无状态组件)提供了类似PureComponent的方法memo方法----import React,{memo} from 'react'
+    memo用在函数组件中    const Foo=memo(function Foo(props){return <div>{props.person.age}</div>})
+        思考题：PureComponent和memo内部是怎么对比的？不是简单的==号来比较的，如果传的undefined呢怎么判断
+
+4-React Hooks的应用
+    类组件的不足: 01:状态逻辑复用难，缺少复用机制（一个组件在不相关的组件中复用，很难，不优雅，用继承的话相互继承不可接受，当然还是有些靠谱的做法的比如renderprops渲染属性和高阶组件。
+                渲染属性的写法看起来比较绕但其原理还是比较简单的(用一个函数属性的执行结果来当作自己的渲染结果，相当于父组件进入到组件的内部拿到了组件里的值有种闭包的感觉)
+                高阶组件与渲染属性有异曲同工之妙。都是负责包装。
+                。无论是渲染属性还是高阶组件都会导致层级冗余(都相当于在原组件之上增添了新的层次，特别在浏览器中查看会特别的显示出为了复用状态逻辑而添加的没有实际渲染效果的组件层级，显得十分臃肿)
+                这不仅是层次体验的问题也存在着运行时性能的问题 。 ）
+                02:趋向复杂难以维护
+                比如类组件的生命周期函数经常会包含多个不相干的逻辑。即生命周期函数混杂不相干逻辑。相干逻辑分散在不同的生命周期里。这种分散很容易写出bug出来。也导致组件难以拆解出更小的组件。
+                03:this指向的困扰
+                内联函数过度创建新句柄
+                类成员函数不能保证this !!!
+    Hooks优势 :
+        优化类组件的三大问题:函数组件无this问题
+                        自定义Hook方便复用状态逻辑
+                        副作用的关注点分离 ---(发起网络请求，访问dom元素，写本地持久化缓存，绑定解绑事件都是在数据渲染视图之外的全部都可以是副作用。
+                        而以往我们的副作用都是写在生命周期函数中的。useEffect是典型的一个hooks函数，它期望是在每次渲染完成之后调用，也刚好是编写副作用代码的时机。
+                        每个useeffect只处理一种副作用，那么副作用之间的关系就清晰多了。我们这种模式叫做副作用的关注点分离。）
+    01-useState：小点：const []=useState(默认值);
+    它支持传入默认值，传变量的话不建议，因为每次渲染这个组件都会执行变量的逻辑求值若复杂逻辑就不太好了。
+    它还支持传入一个回掉函数：= useState(()=>{return props.defaultCount || 0 })回掉函数的返回值就是state的默认值。而且每次组件的渲染中usestate里的逻辑只会执行一次。
+                这就是初始化逻辑复杂的话，这就是很大优势。
+                即组件的每次渲染，相同state值的usestate函数只会在第一次运行时运行一次，后续渲染不会执行。
+    问题6-useState返回的第二个参数--setCount也是和类组件的setSTtae一样，1参可以传对象可以传回掉函数，
+                回掉的话它1行参直接就是count的值hook里的回掉直接就是1参没有props参，
+                而类组件中，回掉里1参是state2参是props的最新值，有点不太一样。。
+    问题5-还有count和setCount，原本值就是1，再setCount(1)组件会不会重新渲染呢？？？？？？？
+        解答：若第一次setCount相同的值，不会触发重新渲染。
+            但是第一次set了不同的值8的话这时会执行渲染，当你再重复点击执行的话这时候set的值是相同的但还是会触发渲染
+            接着按第三次就不渲染了
+            间接解决办法：就是把复杂代码写子组件去，还没有直接的解决方式
+            ---具体见Pages/useState_testjsx文件和系列2文件。
+    问题1-useState怎么知道返回来的是当前组件的state值呢，而不是其他组件的state值counte呢？
+            因为js是单线程的，在usestate被调用之时，它只可能在唯一一个组件的上下文中。其实hooks这些api都利用了全局的唯一性。来推断一些行为，使得一些函数的使用
+            看起来很神奇，实际上原理很简单。
+    问题2-如果一个组件有多个state，那么usestae怎么知道哪一次调用返回哪一个state呢----
+            其实就是按运行时的useState顺序按顺序返回的state值。可参考图01.
+            没有按照固定的顺序来获取count和name的话，它获取到的值也是会错乱显示的。参考图01那种混乱写法的话，return里的jsx里的第一个获取的count会被赋给count值又可能会被赋给name值。
+            所以我们写代码时务必要保证每次都是同样的顺序来写才行--否则出现混乱可想而知。
+    结论3- reatc严格要求每次usestate得按照稳定的顺序稳定的数量被调用的，不能多也不能少否则报错。
+            ---这就意味着usestate必须在组件的顶层调用，不能在条件语句循环语句中调用。
+        那usestate会不会很容易报错没关系，react团队提供了个插件：Eslintpluginreacthooks。npm i eslint-plugin-react-hooks -D  。装到开发依赖中去的。
+        安完后，我们来配置下eslint。打开packagejson文件找到eslintConfig的属性配置其值新增plugins属性和rules属性如
+        "plugins" : ["react-hooks"],"rules":{"react-hooks/rules-of-hooks":"error"}  是关于reacthook规则的检查的规则属性。
+        配置完后，一旦用错usestate的话就会给你个错误提示。这就是eslint的作用。
+    结论4- useState里的setCount是异步的，写完之后，第二行不能获取到最新值。
+        
+
+
+    02-使用Effect Hooks
+    会将绑定事件网路请求访问dom等副作用。副作用最常用的在类组件中的调用时机就是Mount后update后unmount之前。
+    现在就交给单独的负责处理副作用的就是useEffect函数。
+    这个函数相当于三个生命周期的结合但实际上它return的函数代表的是CLean Callback并不完全等同于willunmount。但有些不同的是，如果useEffect是在第一次被调用时，
+    那么它return的回掉函数就是会在组件卸载之前调用。若一个组件是在第3次第5次第7次渲染后执行了useeffect逻辑那么它return的回掉函数就会在第4次第6次和
+    第8次渲染之前执行。严格来讲是在前一次渲染视图被清除之前（return的函数作用就是清除上次副作用遗留下来的状态）--就是下次重新渲染前提前清理好状态。
+    它的return的执行时机在视图被销毁之前被触发有两种销毁的原因：1-重新渲染 2-组件卸载。
+    useeffect的函数体里绑定事件的话，不想让它每次渲染都去重新绑定事件销毁事件的话，可以加个2参空数组就可以了空依赖。
+        我们设置title的逻辑和resize事件的逻辑是分开放在2个useeffect中的互不干扰---这就是副作用的关注点分离思想(不同的事情职责要分开放)。提高了代码复用优化了关注点分离。
+    03-使用Context Hooks
+    useContext不但解决了类组件里ContextType的问题也解决了contexttype只能用一个contxt值的问题。
+    用法具体见文档。const CountContext = createContext();
+    在父组件中：<CountContext.Provider value={count}> <Foo /> </CountContext.Provider>
+    子组件：class Foo extends Component {render() {<CountContext.Consumer>{count => <h1>{count}</h1></CountContext.COnsumer>}}
+    子组件写成函数组件的形式：function Counter() {const count = useContext(CountContext); return (<h1>{count}</h1>)}
+                不要乱用context，因为他会破坏你的组件的独立性。
+        useContext括号里传的参数就是context实例名字。
+    04-使用useMemo/useCallback(很重要，没听懂可回顾百度网盘4-5的视频)
+        01:useMemo与memo类似，memo函数是针对的一个组件是否不必要的重复渲染。usememo是定义的一段代码逻辑是否重复执行---都是判断依赖是否发生改变从而判断是否重复执行。
+        memo和usememo仅仅作为你的性能优化用，不用他们也不影响你的ui效果。。
+        usememo的语法和策略和useeffect都是一致的---但有一点是不一样的就是调用时机，useeffect执行的是副作用所以一定是渲染之后再运行。而usememo是需要有返回值的，返回值是
+        直接参与渲染的因此usememo是在渲染期间完成的，他们是一前一后的区别。
+        《 也就是在数据渲染视图后之外的事情都是副作用。副作用一定是渲染完视图在启动的，
+        所以useEffect含的didmount生命周期。 useeffect是渲染后的执行副作用，usememo是参与渲染的，渲染期间执行的。
+        而且usememo和里的回掉里的逻辑是渲染时同步执行到的，不管用不用usememo的返回值，里面的回掉逻辑都会执行，return出的只能在调用时才执行。
+         》
+        如:  const double = useMemo(()=>{return count*2},[count==3])
+            const half = useMemo(()=>{return double/4 },[double])
+            return <>double: {double} <>
+         依赖数组项为空数组的话，也是会执行里面代码逻辑一次，后面都不执行，若加判断条件符合条件会再执行里面逻辑或里面单个变量变了后会再执行里面逻辑。
+        渲染期间自动执行usememo函数，返回值赋给double和half等。可以依赖state值也可以依赖double这样别的usememo值。
+        02:usecallback ： usecallback就是useMemo的一种简化形式而已。
+        useMemo(()=>fn,[])  就相当于useCallback(fn,[])   这两种写法作用是一样的。
+        usecallback解决的是传入子组件的函数参数过度变化导致子组件过度渲染的问题
+        总结：memo函数根据属性来决定是否渲染组件。usememo根据指定的依赖来决定一段函数逻辑是否重新执行从而优化性能。
+            如果usememo的返回值是函数的话那么就可以简写成useCallback的方式。
+        特别注意：当依赖变化时我们可以断定usememo一定重新执行，但是注意即使依赖不变化我们不能假定它并不会重新执行。这是考虑内存优化的结果/
+        我们要把usecallback和usememo当作一个锦上添花的优化手段。不可以过度依赖它做是否重新渲染
+    05:使用Ref Hooks，用法详见印象笔记或官网
+    -获取子组件或者DOM节点的句柄
+    -渲染周期之间共享数据的存储
+    (这和state差不多，state重新赋值会触发二次渲染，但useref不会触发渲染只用来存储)
+    useref即可以保存组件也可以用来保存变量但不能传入函数做Ref的初始值化。。
+        1-函数组件不能被ref绑定，因为函数组件不能实例话没有this，毕竟只有类组件才能实例化。
+    用App组件函数组件包的函数组件counter，给couter组件绑ref属性是帮不上的，所以得给couter组件换成类组件才能被ref绑上。绑上后在App组件
+    函数组件中就可以通过useRef来获取到了。useRef里的括号值是默认值是current属性的值，如果不用在jsx上绑定标签就读取的是默认值，若绑定了，得到就是绑定的jsx标签值。
+    const refb=useRef('按钮') <div ref={refb}></div>
+    《从函数租件的jsx中直接绑上ref属性是会报错的》
+    从这函数组件不能被ref绑定点就能发现：函数组件不能百分之百被类组件所替代。
+        2-如果碰到组件中需要访问上次渲染时候的数据甚至是state，就把他们存到useref()的括号中，下一次渲染就能够获取到了。
+    这种场景只能用useref，不能不存，就简单定义变量的化，它每次渲染都会把let定义的变量给重制，每次渲染都会给重置，所以用useref像类属性一样的感觉。
+            const [value1,setValue1] = useState(1)
+            const ref1 = useRef(value1);
+            点击事件中写setValue1(2);
+            这时打印的话，打印value1为2，打印ref1为1。
+    两种useRef的场景：一种是获取子组件和jsx标签元素  一种是访问到上次渲染时的数据。
+    06:自定义Hooks。
+    自定义Hook函数，的名字一定要以use开头。
+    自定义Hook也可以return jsx来参与渲染的。
+    利用自定义Hook来分享状态逻辑便利性。
+    Hooks的一大优势就是可以轻松的分享状态逻辑,如在主组件中需要处理一段逻辑，写在这个组件就杂多了，可以抽成个自定义hook，分享处理多余逻辑。有点像抽成成公共函数文件。
+    function useSize() {
+        const [size,setSize]=useState({
+            width:document.documentElement.clientWidth,
+            height:document.documentElement.clientHeight
+        })
+        const onResize=useCallback(()=>{
+            setSize({
+                width:document.documentElement.clientWidth,
+                height:document.documentElement.clientHeight
+            })
+        },[])
+        useEffect(()=>{
+            window.addEventListener('resize',onResize,false)
+            return ()=>{window.removeEventListener('resize',onResize,false)}
+        },[] )
+        return size;
+
+    }
+    fucntion useCount(defaultCount) {
+        const [count,setCount] = useState(defaultCount)
+        useEffect(()=>{it.current=setInterval(()=>{setCount(count=>count+1)},1000)},[])
+        useEffect(()=>{if(count>=10){clearInterval(it.current)}})
+    // return [count,setCount]
+    // return (<h1>{defaultCount}</h1>)
+    }
+    在父组件中使用这个Hook，const [count,setCount]=useCount(0);和const size=useSize();打印size.width
+    自定义Hook和函数组件的区别不大也就是输入输出的区别。
+    06:useReducer的使用：见Pages/useState_useReducerwen系列文件。
+    07:Hooks使用法则(只要对use开头的函数都注意下法则use开头就是hook不是use开头就是普通函数)
+        1-只能在顶层使用hook函数，即你不能在循环语句嵌套条件语句等使用。
+            因为整个hook函数都有可能依赖调用顺序，这样react才能在组件的不同渲染周期中相同的逻辑关联起来。一旦你的hooks函数不在顶层调用
+            很有可能他们的顺序发生了变化，进而导致变量混乱等稀奇古怪的问题。
+        2-仅在函数组件或自定义Hooks函数中调用Hooks函数。即你不能在其他普通函数和类组件中调用。
+    08:Hooks的常见问题
+        1-生命周期函数如何映射到Hooks？
+        2-类实例成员变量如何映射到Hooks？可以用useRef。
+        3-Hooks中如何获取历史props和state？利用useRef存储的值不受页面重新渲染的影响，可以在下次渲染中取出上次渲染时存储的值
+        4-如何强制更新一个Hooks组件？
+        (类组件中有forceupdate方法调用它的化，无论状态和属性变不变化，都会强制让组件重新渲染，甚至还跳过了shouldcomponentupdate的检测。
+        函数组件中肯定没有这个方法了。我们可以写个不参与实际渲染的state然后更新它的值以此来实现强制组件重新渲染。
+        如 const [updater,setUpdater]=useState(0)
+            function forceUpdate() {setUpdater((updater)=>{updater+1})} --函数组件中实现的强制刷新方法
+
+5-React Redux   (很重要-----按redux的dispach等每个模块概念的诞生原因讲的TODOdemo   )
+    redux就是状态容器与数据流管理。
+    redux三大原则：1-单一数据源(应用程序的所有的数据都挂载在同一个对象下面方便管理。还代表同一信息量的数据就一份避免不同步)
+                2-状态不可变(修改数据的前后，数据源不再是同一个对象了为什么这么设计？主要是可以实现应用程序状态的保存。而且可以避免存在不按照规定去直接修改数据的行为)
+                3-纯函数修改状态(纯函数的意思是没有副作用，会依赖外部变量同样的输入产生同样的输出--这么做考虑到能够精确重现对数据的修改行为)
+    01:先用redux实现数据流的一个hooks todo小demo，文件见TODO.jsx。
+    03:在上面的todolist Hooks项目中用dispatch与action；
+        如todo文件中setTodos()的更新数据就没办法总体性描述对todos进行了各自怎样的操作
+        为了让更新数据的行为变得透明------
+    -----(透明集中思想(把复用度相似度高的代码块集中起来，不许分散在各处))------
+        ----现在有种方案用种存对象的方式来表达对数据更新的操作。如
+        {type: 用来描述对数据怎样的操作，payload：用来描述执行这个操作需要什么额外的数据}------这样的整个对象称之为一个action。
+        然后让每一个action都经过一个中心节点函数dispatch，在这个函数里就可以集中处理许多副作用或连带更新的行为。这个dispatch的作用
+        非常负责所有更新数据的擦坐，起码我们能在统一的位置拦截所有的更新操作。
+            但我们每次手动调用dispatch时都需要手动构造一个action对象，为了避免每次都写----我们也可以按照dispatch的集中透明思想，我们把type对象用一个个大函数抽离集中在一个文件来表示，这就诞生了actioncreator概念。
+            actions文件里的函数就是actioncreator函数，actioncreator就是一个普通的函数，可以返回action对象也可以返回回掉函数。
+            我们创建新的action.js文件来实现actioncreator概念。
+            
+        然后去TODOjs文件用actioncreate替换里面所有手动派发acton的代码。然后有个bindActionCreators概念见actions文件笔记。
+        具体文件见TODOjs文件。所以加概念改TODO文件改了三次后最终发现，最后改的dispatch的形式和最开始是一样的，props都是接受addtodo，removetodo等函数，
+        但意义完全不一样了，之前是直接操作更新todo数组，现在是先创建action对象，然后统一经过dispatch处理action---关注点更集中了。
+    04:使用Reducer拆解数据更新
+    上面之前都是按照action的层面去做的数据更新逻辑，这些操作无非都是为了更新数据。就不妨尝试以数据的纬度去做更新逻辑。
+    所以就诞生了reducer函数。在TODOjs文件中，定义个reducer函数对应者dispatch函数也简化职责了，把dispatch里的switch部分抽离出去了所以简化职责了而且把switch
+    里的set更新方法给拆开了，reducer出去只负责给出新的newState数据，让数据处理更纯粹，reducer出去也是weil纯粹性。
+    改后运行，虽然reducer加完项目正常运行了，但是这种方式还有缺陷：reducer里面若state值很多，一个reducer函数穿插着对各种数据的更新，一旦state值变多就会很混乱！
+    所以我们希望能让每个字段独立接受acrtion，并且计算对应的更新值----所以又引入了reducers拆分的概念。
+        一般来说，reducer都比较独立，所以我们把TODOjs文件里reducers拆分相关的代码，提到单独的reducers文件中。在TODOjs文件中只需要引入import reducer from ‘./reducers’;
+    reducer的意义在于能够从数据制造的纬度去处理action这样不同的action之间就不会有干扰
+       《 reducer拆分的概念注意事项：
+            会有多个state对应的redcuer函数，模块化最后会放进combinereducer函数中，这个函数里还是会遍历所有模块化对应的reducer，方到新对象里返会出去。
+            当你外界dispatch个特定类型action时，也会放到reducer模块化返回的总reducer里，那里面尽管你派发的是对应的一个类型state的action，在总reducer里还是会根据这个action
+            遍历对象里面所有的state对应的key类型(详见TODO6源码)，所以里面的每个state对应的reducer都会“执行”，所以在写模块reducer时会有匹配不到type返回state的操作是必写的，否则报错。
+        》
+    05:异步action
+    先见actionsjs文件中把createAdd改造下，不是简单的return个对象而是return出个函数，能动态使用外界传进的参数。
+    改完之后TODO文件是不识别的，得改造下TODO文件中的dispatch 见@异步改造部分代码。
+    然后把TODO文件的idSeq发生器转移到actions文件里并改造下createAdd里参数改成text及了。
+    然后这个idSeq一般都是从服务端获取的数据，这时候就要异步Action的诞生了就这里模拟了setTimeout的数据获取。
+    TODO文件中也牵扯到了store概念的诞生的原因了。
+        事实上redux本身不能处理异步action，不过它的插件可以，如后面的redexsaga，reduxthunk他们的实现原理和
+        咱们自己实现的处理异步action有着共同之处，以后待研究。
+    06:actionsjs的写法规律：
+        actions文件里主要写actiontype字段定义下。然后写actioncreatpr函数，挨个抛出。
+        函数名字的取名也有约定，默认名字前缀都是set开头+字段名来定义actioncreator的函数名，默认也是都return出action对象。
+        当特定功能的actioncretaor起名时就要有特定功能的语义来做前缀了，如toggle前缀+字段(或特定语义)toggleHighSpeed，
+        如show前缀showCitySelector和hideCitySelector
+        如exchangeFromTo，以切换为前缀。获取数据以fetch为前缀。
+            且函数里默认是return出ation对象，若需要在这个actioncreator里做些拦截处理后再派发action的话
+            就需要return出函数形式了，函数2参都是dispatch参和getState参，用来提供基本参数来辅助做相应拦截处理
+            处理后，再用接到的dispatch自己派发特定的ation。
+
+6-PWA介绍
+PWA全程是Progressive Web App 俗称是渐进式网络应用。
+PWA 的目标是让移动端的 H5 站点拥有可以媲美本地 APP 的体验，包括离线可访问，添加桌面图标以快速启动等等特性。加之移动站点无须频繁安装升级的优势，进而挑战现有 APP 的用户习惯，建立 WEB 新生态。
+ Progressive Web App 的一种方式，这种应用能可靠且即时地加载到您的用户屏幕上，与本机应用相似。
+PWA的组成技术：   Service Worker
+                Promise
+                fetch
+                cache API
+                Notification API 
+ServiceWorker(服务工作线程)：相信很多同学都知道WebWorker是一种独立于浏览器主线程的环境一般用来执行较复杂的计算操作，不会阻塞页面的渲染，与主线程通过postMessage通信。
+                service worker与webworker类似但有更多的特性。比如它可以独立于页面常驻内存运行，比如可以代理网络请求，只在https下运行等等。
+                可以说servce worker是pwa中最重要的API，service worker就是整个pwa系统的大脑。
+Promise(承诺控制流)：优化回掉地狱，
+fetch：网络请求，promsie风格，虽然有些浏览器不支持，也有很多插件供选择，依旧存在不足。
+cache API(支持资源的缓存系统)： 以前往浏览器端存cookie localstorage等等都属于内值数据，对于资源，css，图片资源等，我们就没有办法操作。
+                            有了cache api后，就可以直接拦截直接请求 
+                            可以(缓存资源css/scripts/image)，这个过程对浏览器是透明的，这允许我们web页面在没有网络的情况下，依然能够运行
+                            可以(依赖Service Worker代理网络请求)
+                            可以(支持离线程序运行)
+Notification API(消息推送)：除了手机，web页面也是能接受到后台通知的。通知需要用户授权后才可以工作。
+                            依赖用户授权(一旦授权就可以在任意时候推送消息，由于用户不可能一直打开浏览器页面等你的通知，所以我们希望能有常驻内存的线程操作，所以serviceworker是合适)
+                            适合在Serivce Worker中推送
+有了PWA的一些强大API的加持，我们就能写出与原生app想媲美的web应用(甚至还可以安装离线图标)，而且pwa仍然继承了web天生开放的基因拥有持续更新，seo，url分享等原生app不具备的特性这也是PWA最大的秘密所在
+同时PWA严格依赖了https，同样保证了安全性。
+01:Service Worker
+使用serviceWorker是通过在indexhtml中打开的，因为毕竟是HTML5API。
+从实战项目见新建个pwa-learn文件夹开始讲述本章内容。
+先npm i serve -g 安装下快速开启服务的模块，然后在项目根目录下直接运行serve即可，就能开启一个http服务器了。
+serviceworker是以生命周期事件的形式提供的api交互手段，包括重要的那3个事件等
+见sw.js文件。
+02:承诺控制流Promise
+见promisejs文件。
+03:优雅的请求fetch
+fetch函数是个全局函数，用来发起http请求的，在这之前都是用XMLHttpRequest做的，现在更新了，可以直接用fetch了全局函数。
+在serviceworker中是根本访问不到XMLHttpRequest的，只能用fetch。
+fetch也不是万能的，属于一种低级api。不但不能提供上传diff的功能，也不能控制跳出时间，还不能主动更改请求。除了在serviceworker中用之外，其他地方不建议用。
+在页面上下文中一般也不直接使用fetch，而是用足够优秀的axios模块。
+04:资源的缓存系统
+用cache做资源代理，实现页面的离线可用功能。install中应该拉取并缓存资源
+在activate中应该去清除上个serviceworker版本遗留下来的无用缓存。
+在fetch中捕获到资源请求后，去查询并返回缓存中的资源。
+三种操作组成的闭环操作。我们从写入缓存资源开始见swjs文件。一般在刷新页面之前，我们都会得到可能用到的静态资源集合。
+那我们就有必要把集合中包含的缓存资源全部写入到缓存中。这个集合的内容一般在编译构建期间得到我们只需要操作cache把他们写入缓存即可具体见swjs文件install钩子中。
+//缓存是属于cache的api，存后，到浏览器的Application/cacheStorage里了可以查看。
+写完缓存后，就酷可以在fetch钩子中使用缓存了。
+然后cache api不仅仅能够在service worker中使用，也可以在页面上下文中使用，比如onload之后写入缓存
+05:推送Notification API
+通知是一种用户被动接受消息的方式，对于web用户来说，不能期望用户一直停留在页面上，期望即使页面关闭了，只要浏览器进程还在，
+就依然有弹出通知的途径，毫无疑问，PWA中的serviceworker就是最适合弹出通知的地方。
+serviceworker还可以接受到push事件和Notification简直是天作之合。
+    Notification在页面上下文和serviceworker上下文都能用但是有明显的差别。
+    //下面是页面上下文操作的方式：
+    它是全局对象既是一个对象又是一个构造函数，所以可以在上下文中可以直接调用。
+    作为对象：有个permisson属性，表示当前页面已经获取到的授权，毕竟通知是要打扰到用户的，所以有严格的授权
+            该属性有三个值：默认值default代表用户即没同意也没拒绝。denied拒绝值，graned通过值
+    作为构造函数：上的静态方法Notification.requestPermisson()《该方法返回一个promise所以》
+                .then(permisson => cosole.log(permisson)) 执行完后，浏览器弹出是否授权框点击禁止后的，打印出denied状态。
+                点击允许后，打印出granted状态。授权通过后我们就可以弹出通知了。
+    允许后状态变为granted后，Notification就变成了构造函数，创造构造函数的实例就相当于弹出通知的功能。
+    即new Notification("通知的标题", {body:"主体内容"})点击回车，浏览器就弹出通知窗了。
+----------以上就是全部在页面上下文中操作，纯浏览器控制台中写上面代码就能完成。
+    // 下面是worker上下文开启的方式
+    然后在浏览器控制太中把页面的上下文切换为serviceworker上下文。打印他的状态是denied拒绝的，使用请求获取权限的
+    方法，执行会报错，说serviceworker上下文中没有这个方法，因为在serviceworker中弹窗的化，用户都不知道是哪个页面发出的弹窗，所以
+    serviceworker中不允许请求弹窗权限，最终还得通过页面上下文来协助才行。必须得在页面上下文中请求通知权限，然后在serviceworker中
+    就自动获得允许的权限了。然后在serviceworker中上下文中创建通知
+    worker上下文中不存在Notification构造函数这个角色，得当成全局属性。
+    用的registration属性是和html文件里worker脚本代理的then里的参数名是一致的才行
+           ----和页面上下文创建实例的方式不一样，要用self.registration.showNotification("你好标题",{body:"主体内容"})。
+06:如何在项目中开启PWA 
+在实际项目中对PWA的诉求就是对离线环境也就是对serviceworker和caceh api的依赖。在这一领域已经有了成熟的解决方案比如谷歌的workbox，具体怎么使用它
+workbox就给我们提供了在webpack中的怎么使用它的插件。比如在默认的cra项目中已经给我们配置好了“workbox-webpack-plugin”插件依赖。src目录下会自动多了个
+serviceWorkerjs文件和默认的indexjs文件中注视写到要想开启serviceworker只需要把unregister()改成register即可但是在开发环境下还是保持现状就好了，避免
+不必要的麻烦----不过这并不会影响workbox导webpack插件的工作结果。
+    在cra的项目中的终端中执行下npm run build。构建的产出在build目录下有serviceworker文件具体目录结构见图。下面的precache文件是插件配合webpack构建阶段
+    自动生成的静态资源列表，赋给变量，由webpack操作自动放到serviceworker中传做参数的。
+    下面还有个manifestjson文件这个文件也是PWA的一部分叫做webapp-manifest(可以定义一些元信息，比如图标这样web应用就可以在桌面上创建快捷方式了)。--对于移动端来讲
+    使得webapp更接近于原生app。
+    在最后项目上线前，开启serviceworker开启PWA模式，这都是workerbox的开发环境中有了这个插件就完全可以无视PWA的存在。上面只是介绍了原理，项目中都用插件即可。
+
+7-去哪网移动端火车票基础搭建
+01:项目模块交互设计思路分析
+做项目或写组件之前，都得整体做个设计分析思路图。
+02:项目初始化(详见train-ticket目录)
+    自己练项目时，不要用脚手架，自己搭工程项目，慢慢练实践。
+    移除现有无用代码逻辑+创建4个页面文件+改写webpackconfig能够编译所有4个页面，webpack多页面打包。
+    对每个页面都会有独立的html页面的，一般在public目录中作为html页面存放的地方。
+    shell命令：ls ｜ grep -v serviceWorker.js | xargs rm 
+            这个命令意思是遍历当前项目下所有文件除了serviceworker文件外剩下全部删除。
+    在src下建4个页面文件目录。分别是index首页页目录+order页目录+query页目录+ticket页目录。这4个页面。
+    // 由于是多页面的，先把一个页面的基础搭建好后，可以直接复制到新的页面文件夹。
+    // 一般一个页面项目目录中，首先就建5个文件：indexjs+Appjsx+actionsjs+reducersjs+storejs这5个最基本的。
+    1-index首页目录:包括入口文件indexjs(用来将组件render到div元素中)，和入口(主)组件文件App.jsx,redux相关的reducer文件(是一系列reducer函数的集合，模块化reducer的化这也是各个模块的集合)actions文件store文件
+    shell命令：cp -r index query 这个命令是把当前目录下index文件夹拷贝到query文件夹中，名字不在会新创建个query文件夹。
+    2-修改下webpack配置文件，因为默认是单页面打包的，所以要改成多入口的见webpackconfigjs。
+        01在webpack配置文件中找到入口选项，用到了path对象，path是paths.js文件导处的。
+    在paths抛出的对象中新增appIndexJs和appQueryhtml等新增页面的html和入口文件js路径会在配置用到的常用路径变量等。(新增appQueryHtmlappTicketHtmlappOrderHtmlappQueryJsappTicketJsappOrderJs)
+    webpack配置文件中，专门把path路径所有相关的值都抽离出来成一个单独的paths.js文件了，这样可维护性强。
+    仅在entry和htmlpluign中设置即可 成多入口打包的配置写法。
+        02然后在htmlwebpackplugin插件中，配置4个htmlwebpackplugin的使用，供于4页面打包。每个html都应该映射
+    成htmlwebpackplugin的实例。
+03:搭建Mock Service
+    建个train-ticket-server目录，作为自己搭建的服务器接口
+    利用的express，express原则上可以建立多个http服务器。
+    这个目录建好服务器后，然后在train-ticket目录中去做代理请求这个服务器只
+    需要在packagejson里加行“proxy”:"http://localhost:5000" 即可，启动
+    train-ticket项目，在浏览器控制台直接fetch(接口) 即可，就能访问到数据了。
+    然后是用node index.js开启服务的。
+8-去哪网移动端火车票正式开始
+    编写函数的组件都是通用化复用性高的组件，基本都是考虑外界传的props参数，次要考虑组件内部的useState。
+    01:数据结构与模块设计
+    这节我们根据业务需求设计应用程序的状态字段和可能的数据变更操作，特别是react视觉组件的模块化，搭起整体的架子(能贯通的空架子，内容先不用写)，
+    这样在后面的实现才能在架子的基础上一一击破------这就是分而治之的思想
+        所以同学们看到需求后，先不要着急开发细节逻辑，不要从页面从上到下的坏习惯做-做到哪里才想到哪里，很容易
+        反攻浪费时间----我们拿到需求后先整体设计架子，遵循分而治之的思想。
+    搭架子：样板组件代码写好+数据流写好
+    页面写法顺序：先写各个组件的样板代码，把各个组件在该页的Appjsx中引好用好，
+          再补充store的state状态数据的编写--初始化好全局状态数据在store文件中
+          再把action/reducer写好
+          前面三条就是先搭好架子的思想最后再依次编写各个组件的详细设计。
+          ---页面设计原则：先搭架子再逐一填充！
+          ）
+
+    所以本节课作为开始先搭架子，做任务拆解 : 
+                    1-React视觉组件拆分
+                    2-redux store状态字段设计
+                    3-根据弄好的2的状态字段设计redux action/reducer设计
+    可见，设计先设计store再设计reducer等，可见store很重要，先写store文件，在store中的主要任务就是初始state值。
+        1-视觉组件拆分：
+    根据首页视觉分析图，先从头到尾规划下组件拆分：从页面上看能看到模块为5个，
+    分别是顶部导航栏：这个在各个页面中都有，所以我们把他做成公共组件。
+        初始发站日期只看开关搜索他们不是公共组件，就在相应页面目录下建每块都对应个私有组件即可，每个页面都由很多小私有组件构成，react就是要组件化。
+    顶部导航栏：我们在common文件夹(专门存放公共组件的)中写这个组件即文件夹下建Headerjsx和Headercss文件。jsx文件中写个函数组件空的即可，只做搭架子用，具体组件业务逻辑在整体架子打完再写。
+                公共组件都设为默认导出的函数组件，而且要记住，文件中只要有jsx存在就一定要引入react。
+    始发站终到站(一个页面私有组件)：这不是公共组件了，所以放在index文件夹中写页面文件就行了Journeryjsx和Journerycss文件。
+    出发日期(一个页面私有租价)：在index中建DepartDate.jsx文件和Departcss文件。
+    只看高铁动车(私有组件）：创建HighSpeedjsxHighSpeedcss
+    搜索按钮(属于页面私有组件) ：创建SubmitjsxSubmitcss。
+    5个组件空壳子都写好之后，再全部导入到自己index页面下入口组件Appjs中(默认在入口组件Appjsx中主写index页html逻辑)。
+    要是有路由一个页面嵌套很多页面的化，就得把路由放在主入口组件中即可。
+        2-store状态字段设计 (依次编写store->action->reducer)
+    react里的store api设计，比之前源码实现的功能多些，可以在这个createstore里输入初始基本state值，能初始化reducer，和应用中间件。不像之前源码实现(store只负责存储state数据了，reducer在业务中引了)。
+    上面视觉组件搭好之后，设计redux的store字段设计。----store里设计好了会抛出store的dispatch方法和里面页做了初始化state数据。
+    下一步我们就写actions文件(actions里有两个字段一个是type一个是payload)，
+        
+        <  在这写的reducer文件就是源码实现的那个reducer文件，只不过redux把之前实现的多模块类型和combinereducer给分开了，combinereducer封装在在store里
+           的createstore里了，actiontype类型分之判断 单独放在reducer文件里了，其实都是一样的，之前源码实现的时候，直接就一个reducer文件涵盖了combinereduc
+           er的功能和type分之判断的功能都写在一个文件了
+        >
+
+        3-然后根据写好的state与actiontype去写reducer(reducer就是从state制造的维度来遍历actiontype，进而得出state的最新值)。
+    --------------做完上面就是完成了搭架子(每个组件内容不用写，把整体全链接起来，能成功启动架子项目即可)的操作，后续下节就各个组件一一编写业务逻辑。各个击破。
+    02:顶部导航栏
+    在上节搭建好架子的基础上，来完成第一个小部分顶部导航栏的工作。
+    顶部栏只有一个标题和一个返回按钮，所以header组件的传入的props属性也就只有这两个。
+    看到组件的返回按钮，虽然不是传图片参数，而是按钮的点击回调函数可以看作参数传进组件的props中。
+    具体见Headerjsx文件。写完组件后，在app中使用启动后，发现头部组件位置没有在最顶部，这时不鞥在header组件中修改位置css，
+    因为组件注重的是通用化，可复用性-不可以写死他的位置，我们可以在Header的外面包裹一层div来推动他的位置。。
+    03:始发终到站组件编写
+    观察效果图可以发现，他有两个功能，两站交换功能和点击城市浮层功能，设计该组件至少传2个回掉函数参数给props。只需要通过action
+    操作就可以了。先打开Journeyjsx文件和appjs文件也写。
+    
+    《  bindactioncreator和thunk的讨论：不管用不用这两个，常规的actioncreator里都是可以returnaction对象或return函数(含dispatch参和getSTate回掉的获取最新参的，是之前源码实现直接接受state的获取不到最新值的最新版本就用在了redux身上 是redux内部自定义好的)的。
+      从这里会用到bindactioncreator，他的表现形式和thunk的表现有点类似，都是在actioncreator中return出个函数
+      ，他们return的函数中都能接受到dispaych参数。
+      不同的是：1- thunk在return的函数里可以写异步函数的，异步的回掉中可以dispatch一些数据
+              thunk是全局应用的，在你的actioncreator里写returnaction对象return函数都无所谓。
+              2- bindactioncreator函数里可以传多个actioncreator的对象集合也可以传单个actioncreator的函数(传对象返回对象 传函数返回就是一个函数，即对应前者对象里的value值就是个函数，执行函数就是可以直接dispatch(action的))
+              且不具备异步功能：就只能提供给actioncreator一个dispatch的功能外界调用即actioncreator()时里面直接就自动dispatch了，
+              和之前源码实现redux时定义的bindactioncreator是一样的，就是给actioncreator自顶向上封装了个中间层函数，可以自定义接受参数，可以含dispatch功能。
+               他对应的actioncreator可以是returnaction对象形式的也可以是return函数形式的，但函数行书里不能写异步请求，要写的化必须得有thunk中间件的全局应用。
+              3- 这两者之间并不冲突，虽然都是能处理actioncreator是return函数的，
+              bindactioncreator是针对性的，只对传给他的actioncreator加了功能的
+              而thunk是全局的，只要写异步的就能自动处理的。
+
+        》
+    //写城市选择浮层针对于当前主页面。所以它属于公共组件级别，不是页面级别。所以这是个很复杂的组件，还得需要按一个页面那样去挨个拆分一块一块的视觉分析。
+    //老师的口头金句：复杂的解决不了的就分层去做。所以这个大组件分成：顶部搜索层，数据异步加载层+渲染城市列表层+字母快速定位层+搜索建议层
+    //即写组件的话，写组件主要大组件写出来，里面各个小块再分层写成小组件，最后都往里主组件壳子里装即可，因为是一个大的公共组件，
+    // 所以那些分层分出来的小组件就尽量不要分文件写了，都写在一个文件里，特殊公共文件可以从别的文件引用。
+    // 如这个搜索栏  分层写小块组件的话，在主组件的return中可以都写成组件可以一块套搜索jsx标签和组件 组合的形式
+    //搞清全局状态值和内部状态值的目的：全局状态值得写在store里，因为这个值各个页面都用的到如from 和to的input值如控制城市层的开关值(在Journey中和城市浮层组件都能用到用于切换层的显示)，
+    //但城市选择层里的input值只在它公共组件里用的到，就写成它内部的状态值即可。
+    04:城市选择浮层(一顶部搜索栏)
+    视觉图分析可知，城市浮层是个任意组件都可调用的通用组件，所以在common文件中开发它取名CitySelector.jsx。开发后将这个组件引用到Appjs里的。
+    然后在appjsx作为给它传参的环境，必须考虑到在appjsx有什么状态能传给cityselector组件。如看哪些状态能从store里拿到给cityslector传进去。
+    如在appjsxprops中拿到store里的城市选择相关的状态如iscityselectorvisible和citydata和isoladingcitydata这三个，拿到后传给city组件。
+        1-第三方工具: npm i classnames --save 。然后项目中import classnames from 'classnames'。classnames就是一个函数，接受任意字段的参数，
+        并且返回className所需要的空白分隔的字符串可以当作类名。具体见文件。
+        1-记一种jsx className写法 className={['city-selector',(show) && 'hidden'].filter(Boolean).join('')}--会用这种雷鸣写法。
+            classnames('city-selector', { hidden: !show })
+        函数第一参数是固定字符串代表类名固定，第二个参数是对象代表动态类名的传入。如上面检查key和value，当value为真的时候，对应的key最后就会加到class类名中
+        为假的时候就不变成类名，相当于上面filter的原理。。
+        2- 样子写完了，但是点击返回按钮和点击小叉子按钮功能还没有实现。对于点击返回按钮，我们不希望把点击返回按钮死死地绑在关闭城市浮层这个行为上。
+        作为通用组件，我们希望上级组件来决定点击返回按钮之后去做什么。所以cityselector组件的返回按钮的回掉函数应该是上级props中传进来的(onBack参数)。
+        搜索框应该写成受控组件。。。然后在appjsx中写个citySlectorCbs参数的设置和memo配合。
+    
+    05:城市选择浮层(二城市的异步加载)
+    异步加载数据对与react组件来说是一个典型的副作用。要声明副作用就必须使用useEffect函数，写这个副作用函数是发起异步请求，获取fetchCityData，不是每次渲染都使用执行这函数
+    只有show为true的时候才执行副作用逻辑。里面用到fetchCityData函数得在actionsjs文件中声明个新的actioncreator函数(而且是异步的)。具体见文件函数。
+    ---本节课重点是要领会异步请求数据是如何写的，复杂的异步actioncreator是如何编写的。
+    06:城市选择俘层(三渲染城市列表)
+    从视觉图可以看出，需要创建三个组件。第一个组件是最小粒度的城市条目组件，第二个组件是同个首字母开头的城市集合组件，最大粒度的是外层那整个大列表。
+    我们开始分别创建。
+    1-先创建城市条目组件，放在common里，作为公共组件的下的CitySelector里面组件写，即文件里的CityItem组件函数组件。
+    2-再写同个首字母开头的城市集合组件，在common/citySelector文件里的CitySection组件的编写。
+    3-然后bianxie最大粒度组件总外层城市列表CityList(应该含那个右边的字母序列索引列表可以点的)，
+    4-然后把CityList组件挂载到appjsx组件中，开始水流渗透传定律。这块有点复杂，因为CityList所需要的水分(数据)在顶层组件Appjsx中不一定存在。
+    比如CityList里的cityData数据是异步获取的，如当前正在加载，或加载数据时出现了异常错误。那我们就用函数在顶层组件的一级组件cityselector组件中封装下，
+    outputCitySections封装这个函数判断下状态。
+    5-每在组件中新增了props项，最后都得在propTypes中加上。
+    6-对于纯粹的属性输入的函数组件一般都会用memo来优化重渲染功能。然后cityselector，citysection，citylist，cityselector 都用memo优化下。
+    07:城市选择浮层(四字母快速定位)
+    1-依然在CitySelector组件中编写字母定位的AlphaIndex组件实现。
+    2-下一步要做的就是，有26个字母，遍历26个字母来使用AlphaIndex组件。
+    3-然后在cityselector中声明city-index类名的div，在里面直接用alphaIndex组件遍历26个英文字母直接显示在jsx中。
+    4-业务逻辑上点击字母后需要跳转对应的位置，怎么实现呢，我们可以在citysection上做个记号，然后调用dom的srollinterview即可，具体见citysction组件的data-cate属性标记开始。
+    5-然后在cityselector组件中定义个toAlpha函数,然后把这个方法进行透传。
+    6-功能都写完后，最后必不可少的是组件优化，最先优化的是将toAlpha由usecallback优化  和  propTypes的类型添加。
+    08:城市选择浮层(五搜索建议)
+    1-在CitySelector组件文件中写个SuggestItem组件，这个组件代表的是搜索建议列表的单个条目。(写组件之前还是得想应该从props中取出什么数据)
+    2-接下来编写他的上级组件Suggest组件，也是首先想下他使用什么数据呢
+    本节课中大家重点关注副作用中异步请求的同步问题，要么控制同时不能发出2个请求，要么你去检查返回值是否与当前状态匹配。
+    再就是时刻维护好propTypes。
+    09:出发日期的控件
+    去index文件夹/DepartDate文件中写开发这个组件。
+    会用到一个获取时间戳变化成天就可以了，后面也会用这个挺多，所以我们把它作为公共函数，在公共文件里定义表示如建的fp.js文件。
+    借助工具包：npm i dayjs --save ;可以用dayjs来给时间戳做转化。
+    最后从Appjsx中给DepartDate组件传入必要的onClick回掉参数。
+    --最后这个组件不建议用memo给DepartDate组件做优化--这个组件比较特殊，他的输入并不仅仅来源于props，因为里面的h0函数
+    这个函数不加参数的h0()是直接从系统上(本地上获取的时间)--这也是本组件获取数据的另个获取途径。---也就是说DepartDate的输入并不单纯，
+    所以用memo来优化本组件是有风险的即该重新渲染时没有重新渲染的风险。解决方式也很好就把h0参数的时间戳直接由props中传就ok。
+    本节课重点就是memo什么时候不能用来优化的适当的辨别出风险。
+    10:日期选择浮层-搭建
+        先视觉分析页面组件设计搭配：顶部导航组件可以复用该页面的顶部导航+下面就是3个日历，可以写成相同复用组件，所以就编写2个组件，头部和日历两个组件
+        --日历组件里面三条要求：1-过去的日期不可选
+                            2-周六周日是高亮的
+                            3-选中日期后会回填到出发组件上即关掉浮层回到首页。
+        开始编写DateSelector.jsx组件。
+        这节课重点，是复用header组件，还有日期选择组件并没有用memo优化，因为用到dayjs插件，外部数据来源
+
+    11:日期选择浮层-日历组件上
+    视觉分析：先视觉图规划下如何实现这个日历，每个月是一个页，所以显示了3个月就是3页日历，都是一样的，当然遍历就好了，都是复用一套逻辑
+            所以在月份维度我们实现一个组件，在月份的表格中，一周7天为一行，所以一周作为一个组件，最后一周内的每一天就是最小粒度组件了
+            所以按每页来说，一共就只需要3个维度的3个组件去设计就好了。
+    然后依次编写组件：先写月份组件，见DateSelectorjsx中Month组件。
+    本节课重点关注对日期的处理算法。
+    12:日历选择浮层-日历组件下
+    来编写周组件和天组件最小粒度组件。见DateSelectorjsx中week组件和day组件。
+    传onselect回掉的话，想下点击之后会触发什么一系列操作：设置redux中store的departDate + 还要负责关闭浮层 + 做些逻辑判断(过去的日期不能被选择)
+    所以这个onselect函数在App中写对应的onSelectDate方法写透传下发。
+    本节课重点关注key的使用陷阱
+    13:只看高铁动车组件编写见index/HighSpeed.jsx
+    14:提交按钮控件，见index/Submitjsx文件
+9-1数据结构与模块设计(上)9-2(下)
+今天这节课依然是三个任务: 1-react视觉组件拆分
+                      2-redux store状态设计 
+                      3-redux actin/reducer设计
+今天是看的是搜索结果页的视觉图。带筛选条件的火车车次列表很复杂，我们就先做出3个组件就可以了。
+第一就是日期导航组件，第二就是车次列表的组件，第三就是底部的筛选条件组件
+这章所写的代码全部写在src/query页面文件夹。提前把各个组件的样板代码都写好。最后在每个组件中逐一填写。
+（页面写法顺序：先写各个组件的样板代码，把各个组件在该页的Appjsx中引好用好，
+          再补充store的state状态数据的编写--初始化好全局状态数据在store文件中
+          再把action/reducer写好
+          前面三条就是先搭好架子的思想最后再依次编写各个组件的详细设计。
+          ---页面设计原则：先搭架子再逐一填充！
+          ）
+第1:日期导航后面会重复用到他，把他放到common公共文件夹组件中起名为Nav.jsx。先写每个组件的样板代码再逐一填充，即组件格式写好内容空。
+第2:再创建车次列表组件样板代码：List.jsx。--在appjsx中引用好搭好基础架构。
+第3编写store--初始化好state数据。
+第4把初始化的u全局状态state数据，拷贝走，拿去编写actions定义21个actiontype，actioontype命名以ACTION_SET_[FROM]格式命名。
+再在actionsjs文件中写好actioncreator全部函数的形式。每个actioncreator都会返回action结构的对象。
+再把reducer写好，写好reducerjs文件。reducer就是一系列的函数集合，函数的key就是store中初始化的sttae的key。每个state对应个reducer函数。
+9-3:url参数解析与数据请求
+
+//写页面前的两个操作：两个useEffect即可。
+//写每个页面App组件时，都需要把本地的全局状态数据给初始化好，不能使用默认的null值等，否则没法渲染。
+//所以每次写App时，都要从上页面传过来的url中解析参数，和请求新url 获取参数赋给本地的全局store状态值
+                ---这两个操作，这两个操作是写新页面之前必须要做的操作。
+
+
+
+今天这节课完成2个任务，先实现引入header组件，再发起异步请求获取车次数据。当然异步请求的必要参数还得在url中解析出来。
+在Appjsx组件中导入Header组件，header组件和index页面里的是同一个header组件，他是公共组件他是复用的可又调用者定制各种header头部。
+解析url参数 : 引个库 npm i urijs --save   然后Appjsx中import URI from ‘urijs’。
+在react组件中解析url参数，相当于去操纵了组件上下文之外的东西，这是一个副作用，所以借助useEffect来写。这个库的用法官网查。
+从App中解析好url参数，得放到redux的store中的覆盖掉初始化的state对应数据中去(怎么放进去呢？只能用dispatch action)。
+搞清useeffect处理副作用的理由，就能知道，url解析参数放在useeffect里，用存好的url参数发起异步请求再放在另一个useeffect里。
+    本节课重点就是如何处理具有依赖关系的副作用的。有了数据一切都好办了。
+9-4:日期导航
+视觉图上分析日期导航组件，他可以分成三个部分：中间是departdate的字符串表示包括日期和星期，左边是前一天右边是后一天导航(无论是前一天还是后一天都不能无限导航
+到达一定条件后都需要变灰不可点)--这个组件的编写在common/Nav文件中编写。
+这是要用到的自定义Hook的功能的自定义hook可以写在common里面因为nav就是common里的。
+这里就体现了自定义Hook的作用之处了。
+写完后，然后到App组件中使用Nav组件，向其传入必要的props属性。
+本节课重点关注自定义hook函数的提炼过程，和对于软件可维护性上的意义。
+9-5:车次列表
+在src/query页面下的List组件的编写。List在这里作为一个列表容器-它只需要一个传入属性就可以了
+它作为个容器，就只负责子组件的循环渲染展示，没有其他的逻辑，核心的东西不在它这，就像个容器一样，
+提供住处的感觉。。这个组件就是业务逻辑编写，难度很低。
+9-6:底部筛选按钮栏
+完成底部4个筛选按钮的搭建，其中前三个按钮可以实时出发列表数据的更新。
+写弹窗浮层应该意识性想到需要三个div来包裹：
+        一个是全屏div元素“-modal”(防止空白地方被点击到)
+        一个是modal层元素“-dialog”(主要为浮层提供滚动的容器，仅作滚动容器用)
+        一个是内容区域元素“-dialog-content“（主要写浮层的ui内容即可）
+底部筛选栏的组件在query/Bottomjsx组件文件中。
+9-7:综合筛选浮层-缓存状态(上)
+本节设计的组件是页面的精髓。
+这里的options所有不定项文案车次列表文案出发车展文案都是app主组件中fetch请求后拿到的数据，拿到数据挨个dispatch的。
+这个浮层有个特点即他上面的数据被用户操作改动之后，并不直接提交到redux里store中生效。
+直到用户点击确定提交之后才生效--进而影响后面大列表的数据。所以我们应该在浮层组件中设计
+一层缓冲区域，初始值保持与store中state一样并始终追踪着用户的最新改动。
+所以今天最重要的就是实现缓冲区域。确保改动不会直接提交到redux中store中去。
+    我们先去query/appjsx中把要用到的数据，数据流都先取出来通过Bottom组件透传给综合筛选服务层。
+    弄完后在Bottom中写BottomModal组件应用上。
+9-8:综合筛选俘层-缓存状态(下)
+这届课不定项选中后，未点确定按钮之前，并不会触发store更新及大列表的更新，完成了缓存区拦截的初始化功能
+本节课重点关注useState的异步初始化state的方式。
+9-9:综合筛选浮层-时间区间滑块(上)
+ 《  编写带区间的滑块组件时如时间区间滑块，两个滑块距离的单位，中间直线距离的线条都得换算成百分比单位计算，
+    这样很容易编写滑块控件。如滑块和距离线条都是并列在滑块内容区的，他们并列级别的left属性值和和距离线条
+    的width属性值都弄成百分比为单位。
+   》
+
+时间这块在点击确定按钮之前，还是不能直接提交到redux的store中去，所以我们还是得在浮层组件上加上缓冲区，
+也就是一些localState(本地的useState)。。。
+所以还得在query/Bottom组件下文件中创建useState缓冲区localDepartTimeStart和localDepartTimeEnd
+arriveTimeStart和arriveTimeEnd。
+query目录下建立Slider组件 Bottom中引入，来作为时间滑块组件。
+    写组件之前，还得看视觉图，观察需要接受什么props数据(如又title，出发时间的起点和终点到达时间的出发点和终点)。
+还得传入2个滑动时间的2个callback参，具体见bottom文件和Sliderjsx文件。能把静态的滑块和条显示出来，还不能滑动。
+9-10综合筛选浮层-时间区间滑块(下)
+继续在Sliderjsx组件文件编写。开始写滑块的拖动效果。拖动滑块的原理其实就是操作DOM元素的dom事件记录dom事件的
+当前的位置和上次位置的距离--再来移动滑块。
+在Hook中怎么做啊，用useRef--具体见文件。
+reactHooks组件中怎么操作dom事件呢？？应该用useEffect作用
+9-11综合筛选浮层-其他逻辑
+最后做个收尾，把重置和确定按钮的逻辑给完成。
+在Bottomjsx组件中编写。给重置确定按钮的绑定事件逻辑写好。
+本届课重点关注我们是如何通过监控传入属性porps的变化来更新state状态的。
+9-12数据联动与缓冲区重构
+这节我们会处理下经典的数据联动，和react关联不大，但能检验你的redux理解程度。
+看视觉图两个页面，一边发生变化，相关联的另一边也发生变化，这就是数据联动--redux处理这种联动是轻而易举的。
+打开query/reducerjs文件里，因为每个action都会流经reducer，所以我们在checkedTrainTypes函数里可以捕获到
+highSpeed这个state值的对应的action这个bool值的更新行为，从而联动更新---在底部栏按钮只看高铁动车按钮与筛选框里高铁动车项进行联动的话，得从只看高铁动车的reducer函数里
+向筛选项里同步一下，还得在筛选项的reducer函数里向只看高铁动车按钮reducer函数里进行同步。
+即checkedTrainTypes和highSpeed两个函数进行同步编写增加action的type可能项即可。详见文件。完成之后，联动就是这么简单。
+    此时，还有个不足的地方需要改动。即综合筛选服务层里的option组件的update函数，它把update函数封装成了toggle函数，传递给了下面的filter组件，
+这样单个选项(filter)压根就不需要感知到整个checked选中选项的变化就能去更新整个checkedMap对象，为什么这块有不足呢？？？？？？？？？？？
+？？因为这里我们实现的是一个增加或删除单个选项的操作，在下面还有reset清空所有数据的操作。实际上我们已经不能追踪到对这些数据的更新操作了。就像我们在引入redux之前
+也同样容易实现对整个应用程序的数据的控制一样。一旦更新方式多了起来就难以定位潜在的错误。所以我们还是希望能够统一回到对指定数据的各种更新行为。redux的reducer就是这么
+个原理，但是它是在redux的store数据的层面的----对于我们在组件中声明的state，redux就无能为力。
+    不过幸运的是react为我们提供了useReducer 钩子函数，名字上就能看出来它能提供给函数组件类似reducer的作用，只不过它操作的是组件内部的state。今天这个场景就很适合reducer，
+看怎么用reducer来把toggle从option组件中抹掉。
+我们先找到Bootom里的BottomModal组件，此时版本还是以useState的方式来声明4个localchecked属性的。useReducer和useState一样也是用来声明state和修改state的方法的，
+只不过在方式上有所不同(即代码里的新版是用useReducer写的，以前版本的update形式和useState形式被注视了）具体见文件。
+    实际上useReducer内部就是对useState的封装而已，你可以把useReducer当成是一种组件内部即局部redux。因此在具有这种复杂state逻辑组件中可以考虑用useReducer优化。
+
+副作用集联：几乎每个筛选条件都会去修改对应的状态，进而触发异步请求副作用在第一次请求之前它会依赖于url参数是否解析完成(也可以理解成它依赖的另一种副作用)这是一个副作用的集联。
+在具有众多筛选项的浮层中用组件内部state创建了中间缓冲区来接受用户操作的操作行为数据点了确定后才会提交到全局的reduxstore中--这就减少了副作用集联的程度。
+
+10-1:数据结构与模块设计( 俗称“搭架子” )
+这节课开始就开发第三个页面(座次选择页)了。按照页面设计规则，还是要先搭好架子再一一击破：我们第一节课还是先分析视觉组件设计store数据生成actioncreator及后面的reducer等
+搭架子需要的代码。为后面编写组件逻辑提供数据和数据流支撑。
+分析：上面的页头和日期导航之前在上个页面都已经开发过了。这回只要复用就行。
+中间是详细信息点击时刻表会弹窗一个小浮层列车时刻表。浮层是异步加载的。
+下面是购票渠道。每个坐票下面都有两个购票渠道。
+
+这章缩写代码都会位于ticket页面目录下，先来设计store设计些2参的初始化state数据(看视觉图都需要初始化哪些全局state数据如url上接受过来的出发日期等)。
+暂时看视觉图能想到这11个state，store写完后再去actions文件写对应的actiontype和actioncreator(每个actiontype都以action_set开头接state值全部大写构成的类型字段)
+ 我们批量生成actioncretor每个actiontype都对应个函数返回的是action对象，函数名字以set+每个state名字取名。根据以往经验对于bool值的actioncreator需要将set前缀改成toggle比较合适。
+toggle的actioncreator函数主要用来操作开关状态不需要传payload参数return的是个函数称为异步获取当前state，所以写成toggle前缀，异步获取当前的sttae值改变下状态即可。如actions文件里的
+toggleIsScheduleVisible函数。
+(//return函数形式的，之所以能写成这种异步actioncreator就是因为store里的reduxthunk的引用，才能这样异步获取的写法。)
+然后在reducer编写reducer，在reducer文件中先把所有actiontype引入进来然后再抛出对象，对象里每个state都对应着一个reducer函数。
+然后在App组件  。数据流写好后，再把相应的组件样板代码创建出来--达到搭好架子的目的。详细信息这个详情组件，由于在别的详情页也会用到，做成公共组件写Common/Detail.jsx里。
+对于座次票渠道组件在ticket/Candidate.jsx文件里。
+最后还有个隐藏的组件点击时刻表弹出的时刻表组件，把他写成ticket/Schedule.jsx文件组件写好样板代码。最后把这些组件引入到App组件中。
+这样页面项目的准备工作：搭架子 就好了。详见store文件等。
+10-2:url解析与数据请求
+第一步解析url参数获取一部分数据第二步发起异步请求来获取其余的数据。最后把这些数据把hedaer组件日期导航组件先渲染出来，这就是这节课的任务。
+。。所以来到app组件，aoo组件的第一个任务是解析url参数所以在app中引入useEffect和URI的库。然后在App组件中用副作用去解析url参数--详见app组件。
+写app组件的时候，还需要在tickets里把action里增加两个nextDate和prevDate两个actioncreator。app组件中Nav组件props参数的传递(需用到的useNav的参数需要用到这两个actioncreator。)
+10-3:车次详细信息
+detail组件的实现。现在app组件中用好dedatil的挂载和props参数的传入。
+接下在detail组件中编写。编写后点击时刻表还没实现弹出浮层效果，在Appjsx组件中导入与浮层状态相关的actioncreator叫做toggleIsScheduleVisible。现在他仅仅是个actioncreator，要起作用的化
+还必须与dispatch绑定在一起，所以在app组件里写了usememo优化的bindActionCreator方法。然后把detailCbs以解构的方式传递给Detail组件，这样就可以在detail组件中获取到toggleIsScheduleVisible
+detail里点击时刻表的时候就可以直接调用这个toggleIs函数
+最后把他换成插槽的形式了。这个组件会点击触发异步的时刻表浮层的展现。
+
+10-4:异步加载时刻表
+开发这个schedule组件及他的异步加载。在App组件中编写的isScheduleVisible决定的Schedule组件渲染。
+接下来是重点，要把Schedule组件以异步的方式进行加载。
+    如果是异步加载Schedule的话就不能以import方式引入了，必须得注视掉--应该由lazy()的方式引用lazy与Suspense配合使用的。。
+react的lazy异步加载概念，也是基于webpack分隔的原理，lazy引的单独一个chunks包文件，异步加载。
+接下来就时刻表组件Schedule的内容详细编写：
+    由于是循环遍历每一行的，每一行都差不多，就先开发出最小粒度每一行组件ScheduleRow。
+10-5:异步加载时刻表(下)
+    列车时刻表逻辑 ： 4列：序号+车站+到达时间+发车时间+停留时间
+					序号：2个逻辑，一个黑色字体，一个是红色显示。
+					车站里面：2个逻辑，默认显示黑色字体车站莫名字，遇到出发站到达站时变红色字——2个逻辑。
+					到达时间里面：3个逻辑，默认显示黑色字体，始发站的话时间变成始发站显示，到达站的话不变汉字，让时间变成 红色字体显示。
+					发车时间里：3个逻辑，始发站是红色出发时间字体 显示，其余显示黑色时间显示，终到站是将黑色时间变成黑色字体终到站显示。
+					停留时间：2个逻辑，始发站终到站是-显示，其余都是分钟数显示。
+以后做任何功能需求块-都得先把逻辑都写出来，每一块配什么逻辑。
+本节开发中用于逻辑判断控制的都是外界传过来的开关状态值，都是由字段布尔值来判断。
+都是由字段布尔值来判断是换类名还是换jsx标签的现实还是换文本值。
+10-6:座次列表
+设计该页面的最后一个组件设计，一共有三个座次(二等座一等座商务座)只有点击到买票按钮才能跳转到下个页面
+详细设计Candidate组件，由于这个是三个座次样式相同，且点开下面也都是相同的选择项，可以做两层循环渲染组件。
+11-1:数据结构与模块设计
+开发最后个订单页面主要在order文件夹下。按照惯例第一节课还是搭架子(组件视觉分割store设计actions设计actioncreaotr，reducer数据流的实现，搭好架子)
+先看下store文件初始化下全局state状态值---接下来在actions中生成这些状态的actiontype和actioncreator----接下来生成reducer----接下里整理下Appjsx组件connect下且组合下各组件样板代码。
+(actiontype开头都是action_set+state值全部大写的写法。每个状态还会对应一个actioncreator，actioncreator的函数名命名规范是set+state的首字母大写如setDepartdate(),
+默认情况下每个actioncreator都会返回action对象。在reducer中会先导入actions的所有actiontype再批量生成所有状态的reducer函数抛出在一个对象中，在reducer函数中第一步要做的始终是
+解构下接受的action参树得到type和payload，接下来是写分支判断语句，组件视觉拆分:ticket组件乘客信息Passenger组件，选座Choose组件，结算信息Account租件)
+11-2:URL参数解析与数据请求
+//写页面前的两个操作：两个useEffect即可。
+//写每个页面App组件时，都需要把本地的全局状态数据给初始化好，不能使用默认的null值等，否则没法渲染。
+//所以每次写App时，都要从上页面传过来的url中解析参数，和请求新url 获取参数赋给本地的全局store状态值
+                ---这两个操作，这两个操作是写新页面之前必须要做的操作。
+
+
+本节课任务就是把url参数解析出来，和发起异步请求来获取其余的数据。最后我们用这些数据把header组件和车次详情组件先渲染出来。
+App组件jsx中放header组件的外层那个header-wrapper div只是为了方便定位header。
+开始渲染车次详情组件，他需要的数据是从服务端获取的，服务端获取之前必须先解析url参数(解析url参数和发起异步请求都需要副作用useEffect的帮忙)。
+----为了让detail组件能使用两种场景，最直接方式就是让detail组件不去定义中间那部分视图而是由调用者去定义
+决定(如改造成props.children的方式也可以用renderprops的方式)这就大大提高了复用性。
+11-3:乘客信息填写(一)
+先写本页面的ticket组件，这个简单，乘客信息组件是最复杂的组件。
+把ticket组件挂载到App中--因为ticket组件会在url参数解析完后才会渲染ticket组件，这时他的异步数据可能还没返回，里的price数据可能为空。。
+        里的type数据是url参数解析到的，所以他不可能为空。
+下面开发乘客信息填写组件：Passenger.jsx的编写。先打开app，把这个组件挂载到app组件上，它只有一个传入属性，所有的乘客为一个数组。
+本节课重点关注：actioncreator对于封装复杂数据逻辑的作用
+11-4:乘客信息填写(二)
+passengers组件里渲染的passenger组件是出来的复用性组件，他即可渲染成人又可渲染儿童。
+11-5:乘客信息填写(三)
+成人票儿童票  和同行成人是点击的唤起弹出式菜单，只能选择，不能输入。
+这节课专门研发如何实现这个弹出式菜单。有三个地方都会用到这个菜单，除了文本值不同，无论是视觉样式还是交互逻辑都是完全一致的。
+那我们就有理由将弹出式菜单设计成通用的能力(actioncreator层面的通用)，可以被随意调用，但是调用他至少要给出两种信息一是所有的菜单项要指定当前被选中的是哪一个。
+二是选择某个菜单项之后应该做什么。这些信息就决定了我们在store中的menu字段它的数据解构是怎样的。所有的菜单项可以的数据解构可以是个数组(其中标记是哪一个是被选中的)
+至于点中某项后要做什么----我们就可以用回掉函数来实现，
+--不适合考虑成复用成公共组件在common，原因？？？
+        因为单个组件里比较复用的小组件，不适合在common全局组件文件夹中写，就在组件页面目录中单独抽离出组件即可，不必写成公共的。
+        若是各个页面组件中都能复用到，这时候才算公共组件，应该放在common文件夹下面/。
+弹出菜单的步骤：1-设置菜单menu状态的值
+            2-将isMenuVisible设置成true
+            3-为了语义上更明了我们定义两个actioncreator，一个是showmenu一个是hidemenu
+先去actions中定义shoeMenu等actioncreator。然后在order目录下创建Menu.jsx组件。
+接下来把menu组件挂载到app组件上。这样就把弹出式菜单都实现好了，只需要调用就可以了，接下来就分别对性别，同行成人和车票类型三种场景
+实现菜单栏的弹出与点击协助。由于menu状态的内部结构较为复杂，我们还是把三个场景封装成三个不同的actioncreator更方便一些。
+1-先来定义性别的弹出菜单：actionsjs中新增showGenderMenu这个actioncreator编写。
+
+11-6:乘客信息填写(四)
+2-再来定义成人出行的弹出菜单，即在ations中新增showFollowAdultMenu这个actioncreator。之后一直透传给passenger中。
+3-最后一个场景是切换车票类型，允许你把成人票换成儿童票或反过来。这个操作有点难度就是两种乘客类型的字段是不一样的。而且没有多余的成人乘客的话，
+一个成人票是不能切换成儿童票的，不过这发生在点击响应之后。我们先解决弹出菜单的问题。
+--我们在actions中定义最后一个场景的actioncreator名叫showTicketTypeMenu名字函数。
+弹窗菜单就写好了，然后希望把成人乘客的id显示称为成人乘客的姓名。要在passneger组件中做个id到name的映射函数即增加的nameMap函数。
+11-7:在线选座
+开发在线选座组件，添加一个乘客就会在下面出一排座位图。我们就遍历所有的乘客，并且监听点击事件，调用updatepassenger这个actioncreator。
+进而修改对应乘客的seat属性。
+在order/Choose组件开始编写。写好然后在app中挂载choose组件，choose组件不是一直被显示的，只有有乘客信息的时候才会显示。
+所以我们要判断下passengers数组的长度动态显示组件然后把chooseCbs以解构的方式传递给Choose组件。然后再好好编写Choose组件。
+11-8:结算提交
+订单金额，就是简单的乘客成以票价，在实际情况下还要考虑到儿童学生票半价及其他保险类的增值服务，本案例渐变起见都不考虑
+这个组件会有4个子部分：支付金额，提交按钮，半透明浮层以及金额详情，而且必然还存在一个状态用来金额详情的展示状态。
+我们在order目录下Account组件进行编写。写完把这个组件挂载到app组件上。
+11-9:代码规范格式化
+一般实际项目中格式化的话：从两个方面执行代码的格式化
+                1-用命令整体对代码格式化
+                2-在每次git提交之前，仅仅格式化改动的文件
+由于我们的文件遵循的是eslint规范的，前端领域也找不到第二个替代品了，所以我嗯就用eslint fix来完成代码规范修复。
+步骤：1-去packagejson文件中脚本命令新增条，
+            "format": "prettier src/**/*.{js,jsx,css,md} --write && eslint src/**/*.{jsx,js} --fix"
+     2-然后控制台npm run format 执行下，看代码有什么规范问题。执行完之后，就在控制台把有问题的代码文件给抛出来了。得你自己去手动改。
+如某个文件里某个变量没有被使用也会报错。
+     3-cra项目内部只遵循了eslintConfig属性定义的规则，cra后自动在packagejson中增加的属性值。扩展值为react-app包含的规则非常有限。
+一般每个公司和团队都有自己定义好的ESlint规则。extends可以是个数组，可以加个eslint推荐的规则集("eslint:recommended")
+有了这规则后，再运行npm run formate就发现更多错误了比如定义常量要定义在局部作用域顶层，let和const不能混用也会报错。
+我们还可以在eslintConfig下增加rules属性复写规则如
+"rules": { //这个负责eslint负责自动修复的规则功能
+      "react/jsx-indent": [//这是jsx代码的缩进
+        "error",
+        4 //要求使用4个空白
+      ]
+    }//设完后，直接运行，会帮你把文件自动修复4空格缩进
+     4-我们也能做到git提交时自动格式化，这就需要用到git hooks。
+之前都是手动运行命令来格式化的。git hooks与react hooks没有关系，他就是能在
+执行特定git操作的时候能自动执行其他配置好的命令。
+  不过直接配置git hooks还是比较麻烦的，我们有现成的第三方npm模块来帮我们做这事。
+  即 npm i husky lint-staged -D
+其中的husky就是用来自动配置git hooks的。而lint-staged主要是被husky调用，专门针对
+这些要改动的文件执行相应的操作的即现在这种情况的eslint格式化的。
+最终还是要调用keep-alive保存起来。这两个模块需要定义在packagejson里的配置的。
+所以安完后在packagejson里配置下。先配置husky属性，值是对象，值对象里定义hooks属性：
+"husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    } //这就代表提交时我们执行lint-staged命令。
+  },lint-satged是nodemodules下bin软连接下对应的命令，可以直接运行lint-staged命令的
+接下来再来定义lint-staged的配置 ：(即被hooks调用后他执行什么)
+"lint-staged": {
+    "*.{js,jsx}": [ //这个属性是先要过滤文件类型，我们只过滤js和jsx文件。
+      "prettier --write", //遇到这两种文件之后，就先执行eslint --fix命令格式化
+      "eslint --fix", //上行格式化成功之后就执行git add 命令来保存修改。
+      "git add"
+    ],
+    "*.{css,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+上面配完之后，运行命令git commit后，这些文件就会自动格式化并提交。。
+不过遗憾的是esint执行代码格式化的能力比较弱而且支持的文件格式也不多。
+在这里介绍一个另一个代码格式化工具叫prettier。--npm i prettier -D
+   它也是facebook公司的产品，所以天生支持jsx，它的特点是比较武断，能配置的选项不多，所以还是基于这种情况
+   来决定是否使用它。因为它往往格式化后的风格eslint无法进行校正。
+按完之后，会到packagejson中先更新下全局的脚本命令在eslint之前来调用prettier传入要处理的文件它支持的文件类型多，除了支持
+jsjsx外还支持cssmd类型文件加上参数--write。即"format": "prettier src/**/*.{js,jsx,css,md} --write && eslint src/**/*.{jsx,js} --fix
+然后在lint-staged中新增下对应的cssmd的校验，之前jsjsx也可以增加对prettier的处理，所以写了626 627两行处理。
+然后配置完后，执行npm run format，这次format就会有prettier的参与。
+格式命令后执行git commit(这次提交也会有prettier的参与)
+---是一定要写prettier的配置文件的，起名为prettier.config.js,新建这个文件文件的配置选项参考官网。配置文件写好
+才是正式的执行npm run format ，然后在git commit
+12-2:性能与部署
+功能虽然满足需要，还是有些副作用影响性能与部署。
+1-代码体积：庞大的代码体积不但增加解析耗时，还会影响首次加载的性能。那怎么分析各个代码块的体积呢？
+        这里介绍个webapack的插件来实现叫做“webpack-bundle-analyzer”插件。这是webpack打包分析器。
+        npm i webpack-bundle-analyzer -D 。
+        安完之后，在webpack.config.js配置文件中引用使用插件，然后npm start启动下。
+        可以看到这个插件会自动起个8888的服务器页面。页面中能看到各个模块的体积，非常方便。
+        不过呢这是在开发模式下(即nodeenv为development)参考意义不大。
+        我们还是希望在生产环境下product的体积分析结果。---那就这样执行先构建生产环境npm run build。
+        执行build后他照样打开了8888这个页面，此时我们就能看到在生产环境下的模块体积包分析结果了。
+        这结果显示的才是真正耗费的网络流量。可以看到占体积最大的是react-dom。
+        然后构建时直接打开了8888页面肯定是不允许的。我们可以继续配置下这个插件，让他不要开启8888端口直接产生分析结果。
+        即在webpack配置文件中new插件时传入两个参数选项openAnalyzer选型代表是否打开那个8888端口的服务器选择fasle不要打开。
+        第二个选项analyzerMode，他的属性值static只生成静态的html文件即可的意思。这样配置后，再执行npm run build。
+        这样，构建完后，插件会在构建产出目录中生成个report.html文件，这就是静态页面显示的分析结果。
+    1.1如果不加判断的生成这个html文件弄不好会直接生成到线上环境中，会被用户访问到，这肯定不是我们需要看到的。
+    所以可以用个环境变量来控制是否运行这个插件。process.env.GENERATE_BUNDLE_ANALYZER 当这个环境变量不等于true的时候，
+    配合上plugins的数组过滤，就不执行后面的包分析插件。
+2-调整线上环境的静态资源路径：
+        wbepack是根据output里面的定义输出文件的路径的。这样就允许我们任意切换路径。甚至把静态资源放到其他服务器上也未尝不可
+        这就是使用cdn的必要需求。我们来到output中的publicpath，可以知道这个值是有环境变量决定的如pathsjs中的const envPublicUrl决定的。
+        那我们就用环境变量process.env.PUBLIC_URL来指定下试试.
+        即项目根目录下命令行输入PUBLIC_URL=https://www.cdn.com/ npm run build 执行。
+        可以直接在命令行中指定环境变量的。这样构建后，build目录下生成的html里，对资源的引用路径就都自动变成以cdn主机名开头的了。
+        也就是我们指定的publicurl了。但这样的实现也还算灵活还不太可靠，如果对项目不熟悉的人就忘记了环境变量的构建这种方式也没办法执行个性化逻辑
+        比如随机选择一系列的cdn域名。
+            -----那我们就直接改造下，直接在webpack配置文件中修该下publicPath的值，写成三元表达式的形式即如果不满足生产环境的变量。
+            就使用跟路径，如果满足就使用线上标配用的cdn路径，为publicPath设定值。
+            因为在produciton环境下构建一般是用来上线或着线下的测试环境中，这样做比较能真实模拟线上环境。毕竟构建产出几乎是完全一致的。
+            区别只在于：静态资源的路径，所以这块定义了两个条件。
+3-接下来配下service-worker 
+        我们完全可以根据NODE_ENV来自动开启或关闭它。不用担心它对我们开发过程的影响。
+        如我们先打开index页面的入口文件indexjs中，导入下serviceWorker即 import * as serviceWorker from “../serviceWorker”。
+        在indexjs文件尾部写上 if('production' === process.env.NODE_ENV) {serviceWorker.register()} 
+                            else {serviceWorker.unregister()};
+        同样的代码还得在其他页面的各个入口文件中引入使用serviceworker。
+        其中serviceWorker.jsbing并不是我们的写的文件它是cra自动生成的。
+        都写完后，然后npm run build。会爆出个eslint对serviceWorker文件的错误。
+        怎么忽略掉这个错误呢？我们可以建个.eslintignore文件这里面可以罗列要忽略掉的文件。
+        现在可以构建完成。这里项目的构建产出就可以直接上线了。
+        从这可以看出PWA对业务没有任何驱动性的。
+4-页面性能统计的sdk：这是最后一个上线具备的东西了，但这就比较主观了没有什么通用型，每个公司都不一样。
+
+13:课程总结
+1-所谓的hooks就是指在组件的渲染的不同阶段调用的内置函数。
+2-理论上你可以在任何层级组件中使用connect来直接访问redux的store中的数据，但老师在本课中更倾向于
+   只在顶层组件中使用他，深层i组件用useContext。
+3-看到需求就直接上手开发并不是一个好习惯，准备充分的系统分析设计是一个事半功倍的好习惯。所以老师在课中都会先搭架子进行视觉效果组件和数据流的设计。
+  这些工作使得我们只需要关心如何开发视觉组件即可。

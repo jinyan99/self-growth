@@ -1,0 +1,271 @@
+前端性能优化无非就2件事：如何更快更少的加载我们的文件   +  如何更高效更快速执行我们的代码
+前端特有的性能优化：1-react ssr   2-手写移动端的虚拟列表如何使用少量的dom来模拟无限滚动达到性能优化的程度。
+
+csr : 页面由js渲染，js运行于浏览器端，所以称客户端渲染。
+    基于react的csr渲染流程：
+    浏览器下载html文档→下载js→运行react代码渲染页面→展示页面
+    优势：
+    1.前后端分离的架构，利于开发效率的提升
+    缺点：
+    1、TTFP 首屏渲染时间比较长（首屏加载速度慢）
+    2、不能SEO （搜索引擎优化） 。大多数搜索引擎的爬虫只能识别html中的内容，无法识别js中内容。
+    主流服务器渲染框架：
+    1.nuxt.js——vue
+    2.next.js——react
+    ————————————————
+ssr : 服务器生成html→浏览器从服务器下载html→页面展示
+    node的server层启动一个http服务器。
+
+
+1-同构应用架构讲解(结构图见外层同构图01)
+当我们有个前端项目如vuecli项目直接渲染到浏览器上它就是个CSR的应用。
+我们打开浏览器它先加载的是js，然后通过js执行我们的路由和各页面的渲染，所以性能上首屏会比较慢，而且
+没办法做seo优化。
+    我们因此诞生ssr(服务端渲染)，把一个如cli项目代码通过server层有个入口，同时在client层浏览器端也有个
+入口，项目整成2个入口，一个总appjs文件。通过webpack把项目打包，打成2个包，一个叫serverbundle一个叫clientbundle
+然后还有个nodeserever，在nodeserver做2件事(1-用户首次进入页面时由我们node服务器来接管，serverbundle会从这个server
+首次进入[可以理解为刷新的时候会直接先进入serverbundle里面执行render html]--进来之后nodeserver负责把我们的组件渲染成一个
+html直接返回给浏览器--浏览器就能看到我们dom结构了，首屏内容就已经出来了seo也没有问题了)
+    然后用户在首屏html里做些点击交互跳转页面什么的，这个时候由clientserver来接管，首屏页面server层做，交互出现内容交
+给client层做，这个就叫同构。server层把首屏页面渲染出来我们叫做SSR，client层叫做CSR，两个结合叫最流行的同构应用。
+同构缺点：2个入口，对服务器额外损耗---所以流量很大话，可以临时放弃ssr。
+ 同构还有很多问题需要解决：如react里的jsx怎么在server层识别jsx需要babel，怎么在node端做些重定向等特殊处理，怎么做到异步渲染首屏出现
+    react ssr介绍见课件图01
+2-ssr环境搭建
+先建个文件夹npm初始化一下，写个reatc组件，为了实现node层渲染，得借助webpack来做建个webpack.server.js文件(服务层即那个server层面的webapck配置文件因为
+将来要多入口打包的)。
+然后在packagejson文件里配置先脚本命令加个"dev:server": "webpack --config webpack.server.js --watch",加watch是为了监听的。
+再建个 "dev:start": "nodemon --watch build --exec node \"./build/bundle.js\""这个是node层变成我们的一个可执行的node文件包(
+    支持jsx es6语法的变成原生的nodejs语法(nodejs原生语法是不支持es6的，如import express from 'express'这是es6server/index写法，它的原生写法其实是
+ const express = require('express')这样的等等...)。exec是执行命令参数后面是执行node build/bundlejs命令给双引号做了转义。
+)    就是为了先编译再执行webpackserver配置文件进行打包。下一步在node层面去引入命令正确显示react组件内容
+
+3-renderToString实现服务端渲染
+通过webpack编译成node原生文件要先执行dev:server命令-然后再执行dev:start执行那个build之后的bundle.js文件。
+执行的server代码见server目录。
+        先安装npm i react react-dom express babel-loader --save
+        写完server/index后，第一步先把我们node代码解析成build层：npm run dev:server即已经把我们代码已经解析成原生node可执行的了。
+        再运行npm run dev:start ;启动后端启动node server，然后直接浏览器访问localhost:9093就会渲染出开课吧三个字页面了。
+        这样1里的同构图里的server bundle包负责初次渲染就已经实现了。
+        然后在页面里点击累加按钮，并没有累加效果，因为这个页面只是渲染的html页面，并没有交互功能并没有脚本的引入，所以交互功能此时还没有
+        见下节。。
+4-实现hooks累加器的同构应用
+上节把server bundle做好了，还需要做个client bundle(可以实现js脚本引入交互功能)
+就先新建个client文件夹。所谓同构就是：ssr之后，依然前端还能有个入口去进行，前后端2个入口，首屏渲染ssr负责，后续交互渲染client负责。
+需要在client端index的写入。写完然后新增dev:client命令。运行npm run dev:client ,运行完后在public下多了个bundlejs文件-这个js就是我们的
+客户端入口。这时首屏那个html里面还没有引入这个js打包文件，在去server/index文件中htm模版中加个脚本链接下这个代码。
+    路由显示的功能，你在reatc中写好了路由，但在你server层没监听路由的话，也是响应不到首屏html里的--下节讲。。
+5-使用concurrently提升开发体验
+上节是创建了3条命令，现在用这个工具来实现一条命令来启动这三条命令。同时跑多个命令的npm包插件
+    npm i concurrently --save 来安装。
+安装完毕后，需要新增条命令。 "start": "concurrently \"npm run dev:client\" \"npm run dev:server\" \"npm run dev:start\"",
+这样就同时执行了三条命令。--后面直接npm start即可。
+
+6-ssr支持路由
+因为之前项目里的路由都是client层面的路由直接渲染对应的js代码，但是在server ssr后，server端是监听不到路由的切换默认只会显示
+一段js代码，这时需要在server端注册一下各路由的响应--react的官方路由文档给我们提供了对应ssr里用的router库叫static router。
+客户端使用的是browserrouter。在server端要识别requst.url,用staticrouter传参决定渲染哪个路由。在客户端直接使用browserrouter。
+7-使用StaticRouter支持多页面ssr。(其实staticrouter关于ssr的所有用法都有在react-route官方文档中web/server rendering部分介绍过很全的。)
+csr客户端渲染的时候，路由机制都是由我们js来控制的，直接用browserrouter就可以。
+但在server层呢，路由一刚刷新进来的时候是先从node服务器走，所以我们node层的服务器如果没有监听这个路由的话，就会直接报错，还没到js就报错。
+先安装npm i react-router-dom --save 。
+因为要做路由，就新增几个文件夹，component公共组件，container放页面的容器。container里面建个index文件把app里的小a部分copy进去改成Index名字
+新建about user等。容器里的index作为整个项目的入口，外面的appjs文件抽离出来，appjs里可以引入那个container/里东西，app里写成小b代码，这样appjs返回的就是个
+虚拟dom，路由配置的对象。
+    在server层入口这里就不能只监听个/路由了，把/换成*监听所有路由。具体见server/index文件。
+    然后在client/index使用常规的browserrouter配置就可以了。
+即解决路由问题：客户端用browserrouter常规配置即可，server端用staticrouter传requrl(staticrouter就(根据得到的url进行)嵌套(插槽一样)appjs过来
+的<Route>标签，这样server端就注册好所有路由标签了，前端过来什么路由路径都能由server端按需响应出去了)。  这样就完成了多页面路由ssr了。
+
+8-ssr支持数据流
+要用到store的加入，首先client端得有store，server层也得有对应的store，两者获取异步数据的时候有点差别。
+9-redux同构支持(如何把redux集成到同构项目中)
+    安装 npm i redux redux-thunk axios react-redux --save
+安完之后，直接npm start运行项目。redux需要个专门存储的地方，建个store文件夹/store文件为模块化总reducer，旁边的index，user是reducer和state和action的集合文件。
+然后建个mock.js文件是为了模拟几个接口。
+后面在client层和server层的入口文件中都引下Provider和store这俩东西。
+最后就完成了异步获取数据分别在server层和client层都处理了，完成数据的获取。但现在还是有个问题，浏览器显示出，list列表数据没有数据显示---
+因为这个src/container/indexjs文件中useeffect是在render完页面才执行的，这时数据没经过server层处理的化就更新不到浏览器view层。下节解决首页异步数据实现ssr。
+
+10-异步获取数据思路(可参考思路02图)
+组件加载之后，dispatch一个action，获取异步数据...
+由于是组件didmount时获取的数据，这时页面已经ssr加载完html结构页面了，导致didmount生命周期渲染页面才获取的数据补充不到浏览器中的页面去了。
+下面组件的异步数据如何在ssr首屏渲染中就跟着加载出来了-
+------有几种方式解决 :
+    第一种：仿照Nextjs API解决方案，在组件里设置个静态方法LoadData，这个方法返回的数据直接调用store来初始化 来在server层获取这个data(在服务端渲染首屏的时候就去获取这个data
+    然后把这个data返回给store--这个store是我们服务端出来的store，这时候跟客户端的store就分道扬镳了，现在如果store是空的就是客户端渲染出来的，有数据的store是服务端出来的store
+    服务端渲染初始化的情况下服务端store是有数据的，createstore时候服务端的store来到了客户端，客户端初始化以后，store就已经有数据了，这样初始化的时候，刚初始完毕store里就有数据
+    就带数据给渲染出页面了)---这时有两个问题需要明确：1-加载某个路由时我怎么知道某个路由匹配的组件需要哪些数据呢-这时我们需要对路由做些改进。
+                                              2-多个数据怎么同时加载到props里面去？
+11-server层实现数据获取 + 12-客户端获取context数据渲染
+先来到container/index文件进行改造下将里面的异步获取数据的useeffect方法拿到server层里去渲染。先在container/index下模仿next的形式写个Index.loadData静态方法---想通过这个方法来
+发起个异步请求来直接填充我们的store。
+ 然后去serve层/index里面，在这里面就想能够获取到根据路由渲染出的组件，并且拿到其loadData方法。
+ 整个路由组件其实是写在appjs里面的去这文件里把原来的小b部分代码改成小c部分代码的形式改成js动态配置才难获取组件，appjs抛出的部分改成数组的化对应的client/index和server/index用到的appjs都得改造下。
+ 配置完之后，来到server/indexjs文件改造。------然后想做到服务端初始化store的功能就得 把store目录下/store文件的export default store 改成抛出两个函数具体见文件。
+ 这样刷新浏览器，ul里的数据就都已经出现了。最终参考课件图03是都有ul里有数据了。图中是初始的数据是设的window._context属性值上的。所以客户端首次渲染时也能通过window上的属性拿到值做个初始化state进行页面渲染
+ 实现首屏异步数据获取。
+ 这样又会出现个问题？？？？？？
+        比如说在component文件夹中建个Header.js文件。 然后来到server/index将它import一下，在server/index渲染路由的时候将Header组件加在routes.map的上一行。然后在client层也import下使用它一下。把它放在同构模块中
+        正常ssr渲染都是没问题的。
+    1-如果我们的页面首次渲染的时候的那个首页context数据是由Header里link从about跳转过去的，即默认是打开关于页面，点击跳转过去的首页的首次渲染，即是通过Header中link标签跳转过来的，就是它是一个异步加载过程，这个页面并不是ssr出来
+    的，那我们异步数据该怎么获取呢---肯定要通过客户端的方式来进行获取。。下节讲。
+13:前后端统一数据请求
+重启项目，我们不访问我们的首页，只来到about页面刷新，右键查看源代码，会发现初次访问就是about的话，这个context值是空的。因为
+在server/index里routes.map 里有个路由匹配，走逻辑发现about组件里没有loaddata所以push不进去promise数组中。所以首屏渲染时数据就没有发出去。
+然后这时候再去点击来到index首页的话点击发现也是没有数据的但是右键查看源代码ul和context是有数据的，就页面点击就没数据出来。----这就是因为路由在
+跳转到index的时候它并没有执行ssr的内容，只执行了客户端的代码客户端代码没有向server层发起任何网络请求，所以当前页面就空了，客户端执行了，所以源代码中
+是有的数据的，没机会传到view层显示。
+    解决方式：来到container/index文件，把d部分effect代码写上里面加个简单的判断。
+14:User页面多个数据获取报错处理
+这时比如container里面加个User.js就先测试数据请求获取的怎么样。然后在store里新建个user.js 。完成一个最基本的异步代码。这样再来到我们的mock.js新增个user/info接口。然后去store.js中引用下userReducer。
+然后来到appjs新增个/user路由选型组件。
+    当把appjs里的/下的exact给注视掉，这样它就不是精确匹配了，我们在访问user的时候也能访问到/路由。此时有个坑：一旦我有的接口写错了，mockjs文件中监听路由时写成user/info1，这样的话就会报错，渲染不出来server/index里的
+promise数组里就有报错的值。promsie.all就不会触发解决方法：在server/index中的promsie.all的即67行出加个捕获异常处理，报错也能正常处理错的，不报错的能正确处理而不会让promiseall全部瘫痪--
+                    ----接口其实只有一个报错了如何在接口只挂部分的情况下依然能显示出正常的接口的页面，报错的页面报异常处理。。
+所以直接用promiseall会有这个小坑的任意全部瘫痪，注意捕获异常。
+15:布置一个作业：1-接口报错由上面的报错页面500想办法做层降级处理
+               2-统一axios作业解决，可见16节介绍详情，一截图作业01图了；
+16:promise处理
+nodemon的mock启动服务也可以加到start命令里面一个命令解决所有的命令启动
+1-接口报错由上面的报错页面500想办法做层降级处理的解决方案：
+    01:可以把promsieall换成promsie.finally方法解决，不管你报不报错，都给显示出来。它也有个问题就是它并不难在个final之后拿到一个结果
+    02:第二种解决方案server/index里的loadData返回的是个promsie，让它返出来再给它包装一次promsie。即文件里//包装层promsie-d部分代码 这块--这样接口报错就能降级处理显示了。
+    03:Promise.prototype.allSettled()这是个新的api。还没有完全纳入，但是已经可以使用了，这api也可以处理。
+17: axios代理实现
+先说下目前状况的流程图：
+    浏览器    ssrnode     数据接口(mock)
+ssrnode可以作为我们的数据中转，数据的中间层，一方面负责我们页面的服务端渲染，另一方面还会做些接口聚合的工作-----这就是node中间层的一个概念。
+之前是客户端渲染是直接跳转的首页，直接把请求发到mock层(支持跨域)
+若从server端渲染就是从ssrnode层去执行mock的请求(这时不需要跨域)。
+    现在我们想把上面浏览器到mock那条线给剪断，任何浏览器的请求都直接去请求ssrnode层，有些请求ssrnode去发起请求，有些去进行转发
+所以这时用的axios要分成客户端和浏览器端他们的前缀也不一样。浏览器发的请求也是到node层，从ssr层面也是去发起或转发一个新的请求。
+ 2-统一axios作业解决方案：
+    前端跟后端对axios的使用是不一样的。在storejs文件中做一下前后端axios的处理。加了gg部分代码。加完后mock里的跨域设置就可以删了。
+    添加完客户端后端axios后将他们放在thunk的withExtraArgumentAPI里。
+    先在store下面建了个requestjs文件。又在store.js文件改成26行35行加了下thunk的withExtraArgumentAPI。
+    这样我们在使用dispatch异步action的时候，就有个axios的额外的变量了，而且这个axios变量在server层和client端是不一样的能区分的。
+    执行测试的时候，store/indexjs文件里就不用引axios请求了，直接将getIndexList里面加个$axios形参就能接受到了然后直接用$axios.get做请求即可。
+    此时，浏览器的所有请求已经移接到servernode层了。现在我们就给servernode层做个转发或发起请求--即在server/index中加面条式写法代码分支判断。
+    不写面条式写法也可以-或者axios内部提供了中间价可以用它---http-proxy-middleware这个中间件，通过这个中间件可以对http请求做个转发代理。
+    npm i http-proxy-middleware --save  装下这个。在server/index下引入写上H部分代码。
+    然后npm start启动测试下。
+又讲了下redux-thunk中的withExtraArgument API源码到时候待看。
+18:图标处理
+项目在浏览器里标签页左上角的favicon图标处理，每运行个项目，都会发起个这个favicon请求来获取图标显示在标签页图标出，是通过HEAD里
+link做的---<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">。
+19:CSS支持
+想在页面中支持一些css的样式。这得需要webpack层面的支持。先在src下建个App.css文件。然后在Appjs文件中引入。
+然后需要注意：在node层是没有document.createElement等方法的，所以不能在server层去创建元素。
+得   npm i css-loader style-loader -D 。在webpackclient配置文件配置下。
+启动后会报错：document在node环境运行时中没有的，ssr层就用不了styleoader的创建style标签的功能。。
+所以得换个styleloader，有个专门用于同构的styleloader----isomorphic-style-loader。
+npm i isomorphic-style-loader --save-dev  ，然后在webpackserver配置文件中用这个loader替换下之前的style-loader。
+20:错误页面状态码支持
+要做的是，如果我们路由不存在，怎么优雅的去做些跳转或报错的显示。比如在appjs文件中，做个报错相关的显示路由组件，建container/Notfound组件，appjs配置下，appcs配置下
+public配置下，然后在component/Headerjs文件中加个不存在的tab项。点击一下的话请求到了不存在的路由，会在appjs那样默认显示Notfound组件，但是这时是由于是自己定义的routes
+匹配项，是status状态码是200的，我们想让ssr的server端反映为404状态而不是反映200状态，然后显示notfoound组件。-----这时用到的是staticrouter官方路由(react-router官方文档下的web块下的server-rendering页面)
+给我们提供了context方法-即可以传个context全局的一个对象这个staticrouter里的属性定义后会传到下面嵌套的所有组件中渲染后租价中就可以从context中拿到一些传过来的数据来做些跳转做些404的显示
+也行做些其他状态码的处理显示也行。。
+    所以现在server/index中，promiseall里面定义个空对象const context={};放进staticrouter属性中，然后你在Notfound组件中的props中打印就会有个staticContext属性。
+    在渲染了这个组件时就可以给staticContext属性赋值比如敷个{statuscode:404}。敷完之后，在(ssr)server层的index文件的Promsieall里面就能直接拿到这个context.statuscode值，拿到之后就能做些
+    状态的切换和页面跳转之类的--
+        如先把上面的404状态码的问题给办了。。
+           办的方式：在Notfound里面再建个Status组件,将这个组件用在Notfound组件中。然后执行，在server层里index里promiseall里面打印context就能获取到传过来的404状态吗值了，然后就能利用res.status()将404状态吗 
+           返给客户端了。然后前端渲染页面时能network中能高模拟渲染出红色404状态哈哈。
+        如做路由跳转时:在container/Userjs组件中做个登陆逻辑判断，没登录状态的话执行跳转。去那文件看看。只要你返了这个组件，就能自动的在server/index这里就能通过context接收到跳转信息。
+如果你流量过大，由于要在server层做很多jsx的渲染，又很多的额外的性能损耗，那如果真的流量大搞活动的时候性能突然爆发，
+我们如何能够尽可能的规避这个性能问题？？？？下次课讨论(即ssr额外的性能损耗大，日常没问题，大流量期间如何尽可能的规避让服务稳定)。
+21:服务层面性能优化
+原来是浏览器端渲染我们的组件，现在这个步骤集中在了server端，由服务器进行react首屏组件的渲染。毕竟会造成额外的性能损耗，怎么规避？？
+   首先占用服务器资源，这个是我们解决不了的，但是我们有一些方法来尽可能的减少他的性能损耗。
+ssr层面node服务端优化方面很方便做些横向扩展：不改变架构的情况下，就是node服务端实现负载均衡来优化。
+如每个用户来了之后，来到最开始的自己的主机，这时自己的主机就不提供返回数据服务了，由他自己把过来的很多用户向另分别4台机器进行转发，把他们的用户id都放在一起，然后此时买了4太机器作为负载均衡，然后对4求余，
+确保用户每次来都能访问到对应的机器，这样就有了很方便做横向扩展的功能。自己的主机只负责转发请求，这样就达到了负载均衡的效果。
+
+
+
+
+
+！！！！-----------自此开始，使用02份代码文件夹，01那个太重了。-----------------------
+
+
+
+
+
+22:放弃seo的降级渲染实现优化
+讲的结构图，没听懂？？？？下节代码实现
+23:降级渲染实现
+现在webpackclinet里面写个csr，自动生成个html，使用下htmlwebpackplugin插件(npm i html-webpack-plugin -D )。
+src目录下建个index.csr.html模版。很空没有js标签，它的js标签是那个插件自动注入的。
+客户端渲染特别简单就是把一个完整的bundlejs插进html脚本标签里。其他啥都没有。
+服务端渲染稍微复杂点：就是生成的html里脚本里多了个window.__context语句。
+然后启动项目，启动完后，在public下就会自动多了个index.csr.html文件，生成的html文件就仿照那个模版文件一样一样的，不同的是就
+自动注入了个链接bunldle.js的脚本文件。----这样就完成了csr在webpack层面的一个生成。
+    然后在server/index文件中，写个函数。在get(*)监听路由里判断，什么情况下是否开启csr降级。具体见文件。
+    然后写完后，启动项目，地址栏中输入localhost:9093/?_mode=csr 回车后，渲染页面，就完全是客户端渲染，相当于server层不处理直接给我们返回整个完整的html了。
+    然后进行交互的话就直接是客户端的csr的渲染了。但现在有个警告问题出现了(虽然没报错) : 此时serve端和client端html内容不一样了，
+     啥原因？先见client/index文件，如果你单纯的csr渲染就不应该用注水脱水这个功能，不能从store里拿数据了，而是应该用render来操作。
+    所以我们为了兼顾client/index的渲染方式，分支判断下现在是服务端渲染还是客户端渲染。见文件加的分支语句。这样就完成了降级渲染的功能。
+24:css细节优化
+想在组件层面，组件内部css的渲染的(css解决方案)，每个组件都有各自的作用域，把appjs里的样式删掉，改成每个组件都有自己对应的样式 ，怎样实现?
+现在webpackclient配置文件中给cssloader加属性参数，让它开启css modules的功能。
+然后在server端的webpack配置文件也配置下cssloader开启css modules的功能。
+给每个组件配好各自的样式之后(见container下的各个文件)--这时页面还不会反映出来，因为现在还是ssr的架子，。还得需要在server层处理展现css内容
+    先在server层字符串模版手动加上style标签，标枪里放上ssr渲染时的样式---那我们如何读取呢？？
+        我们可以通过context的形式进行传递见server/index文件建立context。来到我们Index.js里打印下styles._getCss内容(这内容是server端
+        特有的这属性是ssr时style-loader做上去的)，，然后在Indexjs文件里写上判断if(props.staticContext){}具体见文件。
+        然后再来到server/indexjs，把从context得到的css放入字符串模版中的style标签里，这样启动项目就完成css样式的渲染了。
+具体某块不懂的到时候亲手试试把。。。。
+25:高阶组件优化css
+上节得在每个组件中做个css的push操作，就很不优雅很麻烦，现在用高阶组件来优化这个功能。后面使用的时候就类似与connect那样简单的使用即可。
+先在src下新建个withStyle.js文件。
+    （  //任何用到jsx的地方都需要引react。）
+然后在Indexjs文件中引入这个withStyle组件并使用这个高阶组件。同构那个loader自己内部也封装了这个withStyle高阶组件它给科利华了用它的方法也行。
+26:withStyle问题修正
+用了withStyle高阶组件后首先刷新页面，下面的数据会闪下，右键点击源代码window的_context值为空了，ssr失效了，为什么会失效？？？
+    因为在Indexjs文件里抛出的是connect是个新组件不是Index.loadData那个组件，loadData方法失效了，
+    即但这时用高阶组件有问题，有时在React 组件上定义静态方法很有用，当你将HOC应用于这种组件时，原始组件将使用容器组件进行包装。这意味着新组件没有原始组件的任何静态方法。
+    解决方法很简单：
+           第一种方式：将两个都写在一个名字NewIndex即可，抛出那个组件名即可具体见Index文件。(把withStyle高阶组件去掉其实也是正常了)
+           第二种解决方式：还是用之前的Index方式不用NewIndex，然后去withStyle高阶组件里修改下，增条加loadData方法的语句，但这样并不好，
+                        但这时用高阶组件有问题当你将HOC应用于组件时，原始组件将使用容器组件进行包装。这意味着新组件没有原始组件的任何静态方法。
+                        loadData方法呢。
+           第三种解决方式 : 现在去connect源码中看看：connect源码中connect函数返回的组件如何和传递的selectorFactory的loadData合并的？？
+得去看看connectHOC的定义的地方，connectHOC被connectAdvanced赋值的，看看connectadvanced定义的地方--里面selectFactory是传进来的组件。
+然后就想找跟静态方法相关的额最终找到了hoistStatic(维持静态方法的函数)。这种函数在react官方文档中有介绍，官方文档里的高级指引里的Higher-Order Components里面。
+把这块文档拉到最后有个static mehtod方法的介绍。里面的处理就跟我们第二种解决方式差不多并且可以优化我们的第二种解决方式-----那里提到当我们不知道静态方法需要copy时
+就使用个hoist-non-react-statics库，自动copy所有非reatc的静态方法进行一次合并。----
+    我们学习照做下，按下那个库，npm i hoist-non-react-statics --save 。然后来到withstylejs文件使用下。
+    这个库的具体使用方法也可以去github上搜搜其一些常见api用法，这也是react官方推荐的库。
+27:ssr其他原理思路介绍
+当你项目并不需要那么严谨的同构，只是想爬虫出来给些简单的seo给用户，就行了，要求很低。那我们怎么实现呢？
+具体见外层实现思路图图，及下节的代码实现吧。
+28:puppeteer实现ssr
+用户访问到我们的nodeserver层服务器之后，node server并没有做一些同构设置，只是单纯的写个爬虫去我们左侧csr应用里面内容爬虫爬下来。
+然后再返回，这样也大概实现了ssr的一个效果。
+    先来serve下配置文件中把csr属性改成true。启动项目，现在网页检查代码已经是个csr的应用了。
+    此时：：先安装个puppeter，npm i puppeteer --save    是谷歌出品的一个无头浏览器api非常简单即可以在node中控制chrome浏览器。
+    新建个ssr.js文件。写完后，然后nodemon ssr.js  启动项目运行了ssr.js服务，然后刘浏览器访问测试了下。
+    然后用puppeteer做个爬虫去抓取就可以了，过滤的url就不抓取了，抓取爬虫之后，把抓取的爬虫内容直接返回就ok了。
+    在ssrjs文件写操作，具体见文件。这种方式使用起来没问题但性能差一些。
+
+有两个库：prerender通用库，大概原理就是-遍历所有传过来的路由，都写成html文件，或者都缓存上，就不用33行临时发起网络请求了--这种叫预渲染叫prerender
+        prerender-spa-plugin跟spa相关的prerender，对vue react webpack支持的更好，作为webpack插件使用。和上面功能都一样
+使用真正的框架Next.js来做ssr(这框架做ssr的原理和之前几次课讲的原理都差不多，用起来你会得心应手)。
+    作业：使用Nextjs+antd+redux实现类似掘金的首页效果
+     1-查看网页使用的接口
+     2-左侧掘金热文，右侧github trending
+     3-支持切换
+
+
+29:总结
+
+
+
+
+
+
+
+
+

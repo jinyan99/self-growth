@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>learn PWA</title>
+    <link rel="stylesheet" type="text/css" href="./index.css">
+</head>
+<body>
+    <h1>hello99 PWA- </h1>
+    <script>
+        //使用它，1参是注册的serviceworker代理的脚本地址，2参是scope参数是指定的控制页面的路径，/代表控制域下所有路径
+        navigator.serviceWorker.register('./sw.js', {scope:'/'})
+                                .then( registration => {
+                                    console.log(registration,'注册成功worker代')
+                                }, err => {
+                                    console.log(err,'抛错了')
+                                })
+
+
+    /* const xhr = new XMLHttpRequest()
+    xhr.responseType = 'json'
+    xhr.onreadystatechange = () => {
+        if(xhr.readyState === 4) {
+            if(xhr.status >= 200 && xhr.status < 300) {
+                console.log(xhr.response)
+            }
+        }
+    }
+    xhr.open('GET', '/userinfo.json',true)
+    xhr.send(null) */
+   /*  fetch('/userinfo.json', {
+        method: "GET",
+        headers: new Headers(),
+        credentials: "include"
+    }).then(res => res.json())
+      .then(info => console.log(info)) */
+    const req = new Request('/userinfo.json',{
+        methed: 'GET',
+        headers: new Headers()
+    })
+    fetch(req).then(res => res.json())
+            .then(info => console.log(info))
+
+
+
+
+    </script>
+</body>
+</html>

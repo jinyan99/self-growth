@@ -1,0 +1,15 @@
+{
+  "name": "mock",
+  "version": "1.0.0",
+  "description": "用来给火车票项目做后端接口测试用起的服务器用",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "金岩",
+  "license": "ISC",
+  "devDependencies": {
+    "dayjs": "^1.8.22",
+    "mocker-api": "^1.13.1"
+  }
+}
