@@ -19,7 +19,7 @@ let viking: Person = {
 	name: 'kji',
 	age: 20
 };
-viking.id = 33; // 只读不能赋值
+//viking.id = 33; // 只读不能赋值
 
 // 接口中函数写法
 interface Radio {
