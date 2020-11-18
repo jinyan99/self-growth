@@ -170,6 +170,7 @@ function keyListToString(keyList: Key[]) {
 }
 
 const internalProcessProps = (props: DataNode): Partial<TreeNodeProps> => props;
+
 export function convertDataToTree(
   treeData: DataNode[],
   processor?: { processProps: (prop: DataNode) => any },

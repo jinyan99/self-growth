@@ -58,6 +58,7 @@ export interface TreeProps {
   defaultExpandAll?: boolean;
   defaultExpandedKeys?: Key[];
   expandedKeys?: Key[];
+  
   defaultCheckedKeys?: Key[];
   checkedKeys: (Key)[] | { checked: (Key)[]; halfChecked: Key[] };
   defaultSelectedKeys: Key[];
@@ -810,18 +811,21 @@ class Tree extends React.Component<TreeProps, TreeState> {
     return (
       <TreeContext.Provider
         value={{
+          // TreeNode中A模版所需值
           prefixCls,
-          selectable,
           showIcon,
           icon,
-          switcherIcon,
+          selectable, // TreeNode节点的可选状态
           draggable,
+          loadData,
+
+          switcherIcon,
           checkable,
           checkStrictly,
           disabled,
+          // TreeNode中B模版所需值renderTreeNode+motion+prefixCls
           motion,
 
-          loadData,
           filterTreeNode,
           renderTreeNode: this.renderTreeNode,
           isKeyChecked: this.isKeyChecked,

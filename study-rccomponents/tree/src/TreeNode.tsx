@@ -115,6 +115,9 @@ class TreeNode extends React.Component<InternalTreeNodeProps, TreeNodeState> {
     registerTreeNode(eventKey, null);
   }
 
+  // =============== 节点上的回调汇总 START ==================
+
+  // 选中相关
   onSelectorClick = e => {
     // Click trigger before select/check operation
     const {
@@ -161,6 +164,7 @@ class TreeNode extends React.Component<InternalTreeNodeProps, TreeNodeState> {
     onNodeCheck(e, this, targetChecked);
   };
 
+  // hover相关
   onMouseEnter = e => {
     const {
       context: { onNodeMouseEnter },
@@ -175,6 +179,7 @@ class TreeNode extends React.Component<InternalTreeNodeProps, TreeNodeState> {
     onNodeMouseLeave(e, this);
   };
 
+  // Menu上下文
   onContextMenu = e => {
     const {
       context: { onNodeContextMenu },
@@ -182,6 +187,7 @@ class TreeNode extends React.Component<InternalTreeNodeProps, TreeNodeState> {
     onNodeContextMenu(e, this);
   };
 
+  // 拖拽相关
   onDragStart = e => {
     const {
       context: { onNodeDragStart },
@@ -364,7 +370,9 @@ class TreeNode extends React.Component<InternalTreeNodeProps, TreeNodeState> {
 
     return treeSelectable;
   }
+  // ==================== 节点上的回调汇总 END ======================
 
+  // ==================== jsx中渲染模版 ============================
   // Switcher
   renderSwitcher = () => {
     const { expanded, switcherIcon: switcherIconFromProps } = this.props;
