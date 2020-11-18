@@ -14,6 +14,7 @@
 
 ### 下面是该项目架构的client/src/目录结构
 
+```javascript
 ├── actions
 │   ├── api.js
 │   ├── assignment.js
@@ -185,6 +186,7 @@
 ├── routes.js  // 路由文件
 ├── serviceWorker.js
 └── theme.js
+```
 
 - 重点关注它的redux与router的项目集成方式模块化方式
 - 采用模块化reducer，pages/每个页面都有自己的reducer文件(单文件含state，reducer，总actions文件夹中提取的部分actioncreator)
