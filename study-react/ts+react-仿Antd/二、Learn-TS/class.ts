@@ -84,10 +84,12 @@ interface Radio {
 interface Battery {
 	checkBatteryStatus();
 }
-// 接口之间也可以继承
+// 接口之间也可以继承 用extends符号
 interface RadioWithBattery extends Radio {
 	checkBatteryStatus();
 }
+
+// 给类加类型 用implements符号
 class Car implements Radio {
 	switchRadio() {}
 }
