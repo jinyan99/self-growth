@@ -13,7 +13,7 @@ import proxy from 'http-proxy-middleware';
 //这段代码就是 要在server层面引入我们的app。去渲染我们的app。
 const store = getServerStore()
 const app = express()
-app.use(express.static('public'))
+app.use(express.static('public'))// 以public目录作为静态资源目录-没有加公共路径前缀
 
 app.get('*',(req,res)=>{
   //监听所有路由。
@@ -39,10 +39,10 @@ routes.some(route=>{
     const {loadData} = route.component
     if(loadData){//如果loadData存在化，说明当前组件需要异步去获取数据
       //包装层promsie-d部分代码
-      const promise = new Promise((res,rej)=>{
-       //是一种规避报错，可以考虑加些日志。
-        loadData(store).then(res).catch(res)
-      })
+      // const promise = new Promise((res,rej)=>{
+      //  //是一种规避报错，可以考虑加些日志。
+      //   loadData(store).then(res).catch(res)
+      // })
     //包装时用这个 promises.push(promise)
       promises.push(loadData(store))
     }
@@ -58,7 +58,11 @@ routes.some(route=>{
       //这个方法就是把react组件解析成dom(html),是由renderToString API做好的
       //里面的babel解析jsx成虚拟dom，然后用rendreTOString把页面解析出来
       <Provider store={store}>
-        {/* 下面staticrouter的用法，得加location属性，把req.url传递给staticrouter，这样后端就能知道要响应什么路由*/}
+        {/* 下面staticrouter的用法，得加location属性，把req.url传递给staticrouter，这样后端就能知道要响应什么路由--
+        静态路由具体见react-router-dom中文文档静态路由https://serializedowen.github.io/docs/react-router-dom/API/static-router
+        ---> 接收一个context属性，在咱们匹配到的route的渲染自定义组件里，props中会自动接收这个上下文值，咱们给上下文自定义赋值，然后在本content后面
+        就能使用到context了
+        */}
         <StaticRouter location={req.url} context={context}> 
           <Header></Header>
           <Switch>
@@ -76,7 +80,7 @@ routes.some(route=>{
     if(context.action=="REPLACE") {
       res.redirect(302,context.url)
     }
-    // 然后插入字符串模板
+    // 然后插入字符串模板 ---> 页面先加载后端给的App组件，最后再水合渲染一遍前端的App组件（若两次App组件dom不一致或props数据不一致则会引起组件重渲染闪白现象）
     res.send(`
     <html>
       <head>

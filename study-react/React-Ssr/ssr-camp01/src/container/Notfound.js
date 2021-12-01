@@ -11,9 +11,9 @@ function Status({code,children}) {
 function Notfound(props){
    console.log('notfound', props)
    //渲染了这个组件，给staticCOntext赋值：statusCode=404
-   return <Static code={404}>
+   return <Status code={404}>
         <h1>大兄帝瞅啥呢</h1>
         <img id='img-404' src="/404.jpg" alt></img>
-    </Static>
+    </Status>
 }
 export default Notfound

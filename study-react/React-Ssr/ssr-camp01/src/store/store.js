@@ -9,13 +9,13 @@ const reducer = combineReducers({
   user:userReducer
 })
 
-//gg部分代码----前端的请求直接映射到本地就可以了，甚至都不用做baseurl
-const serverAxios = axios.create({
-  baseURL: 'http://localhost:9090/'
-})
-const clientAxios = axios.create({
-  baseURL: "/"
-})
+// //gg部分代码----前端的请求直接映射到本地就可以了，甚至都不用做baseurl
+// const serverAxios = axios.create({
+//   baseURL: 'http://localhost:9090/'
+// })
+// const clientAxios = axios.create({
+//   baseURL: "/"
+// })
 
 
 

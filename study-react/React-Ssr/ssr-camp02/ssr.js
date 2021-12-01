@@ -6,11 +6,11 @@ async function test() {
     console.log('截图')
     const browser = await puppeteer.launch()
     const page = await browser.newPage()
-    await page.goto('https://kaikeba.com/')
+    await page.goto('https://www.baidu.com/')
     await page.screenshot({path: 'kaikeba.png'})
     await browser.close() //这样就会运行后就会截个该网站图片存到本地
 }
-//test()
+// test()
 
 
 const urlCache={};

@@ -20,7 +20,7 @@ import Index from './container/Index'
 import About from './container/About'
 import User from './container/User'
 import Notfound from './container/Notfound';
-import './App.css';
+// import './App.css';
 
 //小 b 部分代码
 //这种是写成用路由包裹起来的组件
