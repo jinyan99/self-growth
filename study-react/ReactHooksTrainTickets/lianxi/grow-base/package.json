@@ -47,10 +47,10 @@
     "postcss-safe-parser": "4.0.1",
     "react": "^16.13.0",
     "react-app-polyfill": "^1.0.6",
-    "react-dev-utils": "^10.2.0",
+    "react-dev-utils": "^12.0.1",
     "react-dom": "^16.13.0",
     "resolve": "1.15.0",
-    "resolve-url-loader": "3.1.1",
+    "resolve-url-loader": "5.0.0",
     "sass-loader": "8.0.2",
     "semver": "6.3.0",
     "style-loader": "0.23.1",
@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "eslint-plugin-react-hooks": "^2.5.0",
-    "webpack-cli": "^3.3.11"
+    "webpack-cli": "^3.3.12"
   },
   "jest": {
     "roots": [
