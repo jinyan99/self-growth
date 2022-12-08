@@ -10,6 +10,6 @@
   "license": "ISC",
   "devDependencies": {
     "dayjs": "^1.8.22",
-    "mocker-api": "^1.13.1"
+    "mocker-api": "^2.9.5"
   }
 }
