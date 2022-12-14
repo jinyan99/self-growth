@@ -25,7 +25,7 @@
     "babel-loader": "^8.0.6",
     "concurrently": "^5.0.1",
     "css-loader": "^6.5.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "http-proxy-middleware": "^2.0.1",
     "isomorphic-style-loader": "^5.3.2",
     "nodemon": "^2.0.15",
